@@ -1,11 +1,11 @@
 {
-  "name": "buzl-tracker",
+  "name": "@mahe_pkm/buzl-capi",
   "version": "1.0.0",
   "description": "All-in-one CLI & GUI for automated GTM, Meta Pixel/CAPI, Google Sheets Form Sync, and Zoho CRM injection with self-testing.",
   "main": "src/index.js",
   "bin": {
-    "buzl-tracker": "./bin/cli.js",
-    "buzl-capi": "./bin/cli.js"
+    "buzl-capi": "bin/cli.js",
+    "buzl-tracker": "bin/cli.js"
   },
   "repository": {
     "type": "git",
@@ -15,6 +15,9 @@
     "url": "https://github.com/mahe-pkm/Buzl_CAPI/issues"
   },
   "homepage": "https://github.com/mahe-pkm/Buzl_CAPI#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "start": "node bin/cli.js",
     "gui": "node bin/cli.js --gui",
