@@ -54,6 +54,7 @@ USAGE:
   $ npx buzl-tracker [dir] --list-backups      List all saved backups on disk
   $ npx buzl-tracker [dir] --restore [name]    Restore a specific backup or latest snapshot
   $ npx buzl-tracker [dir] --uninstall         Cleanly remove all tracking tags from site
+  $ npx buzl-tracker --handbook                Open official User Handbook in default browser
   $ npx buzl-tracker --help                    Show this help reference manual
 
 ARGUMENTS:
@@ -64,6 +65,7 @@ OPTIONS:
   -b, --backup [name]    Create an immutable timestamped backup before modifications
   -r, --restore [name]   Revert HTML files to a previous snapshot or 'latest'
   -u, --uninstall        Strip GTM, Meta Pixel, runtime scripts, and form hooks
+      --handbook         Open printable cross-platform User Handbook in browser
   -h, --help             Display usage guide and command summary
 
 KEY CAPABILITIES:
@@ -74,6 +76,24 @@ KEY CAPABILITIES:
     Buzl Navy Blue (#1E4E9E) headers, full-row conditional colors, and auto-pruning empty team tabs
   ✔ 100% Zero-Risk Rollback: Automated snapshot backups prior to every file injection
 `);
+  process.exit(0);
+}
+
+// ============================================================================
+// COMMAND: --handbook (Open User Handbook in Default Browser)
+// ============================================================================
+if (args.includes('--handbook')) {
+  const handbookPath = path.resolve(__dirname, '../USER_HANDBOOK.html');
+  console.log(`📖 Opening User Handbook in default browser: ${handbookPath}`);
+  const { exec } = require('child_process');
+  const startCmd = process.platform === 'win32' ? `start "" "${handbookPath}"` :
+                   process.platform === 'darwin' ? `open "${handbookPath}"` :
+                   `xdg-open "${handbookPath}"`;
+  exec(startCmd, (err) => {
+    if (err) {
+      console.log(`Open manually in browser: file://${handbookPath.replace(/\\/g, '/')}`);
+    }
+  });
   process.exit(0);
 }
 

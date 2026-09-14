@@ -189,6 +189,16 @@ function startGuiServer(rootDir, port = 3333) {
         return;
       }
 
+      // 4.5. Route: /handbook (Serve User Handbook HTML directly)
+      if (pathname === '/handbook') {
+        const handbookPath = path.join(__dirname, '..', '..', 'USER_HANDBOOK.html');
+        if (fs.existsSync(handbookPath)) {
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          fs.createReadStream(handbookPath).pipe(res);
+          return;
+        }
+      }
+
       // 5. Static Files
       let filePath = path.join(PUBLIC_DIR, pathname === '/' ? 'index.html' : pathname);
       if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {

@@ -471,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const exportData = {
       reportTitle: 'BUZL CAPI Suite — Automated Verification & Compliance Audit Report',
-      version: '0.1.2',
+      version: '0.1.3',
       generatedAt: new Date().toISOString(),
       projectRoot: (liveStateRootDir ? liveStateRootDir.textContent : '') || 'Workspace Root',
       summary: {
@@ -569,7 +569,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div style="text-align:right;">
       <div class="meta"><strong>Date:</strong> ${timestamp}</div>
       <div class="meta"><strong>Status:</strong> <span style="color:${statusColor}; font-weight:700;">${report.allPassed ? 'VERIFIED PASS' : 'ISSUES DETECTED'}</span></div>
-      <div class="meta"><strong>Engine:</strong> v0.1.2 (WCAG 2.2 AA)</div>
+      <div class="meta"><strong>Engine:</strong> v0.1.3 (WCAG 2.2 AA)</div>
     </div>
   </div>
 
@@ -1403,6 +1403,119 @@ document.addEventListener('DOMContentLoaded', () => {
           copyScriptCode.innerHTML = '<svg class="icon-xs"><use href="#icon-clipboard"/></svg> <span>Copy Code</span>';
         }, 2200);
       });
+    });
+  }
+
+  // ==========================================================================
+  // Cross-Platform User Handbook Modal & PDF Print Integration
+  // ==========================================================================
+  const btnOpenHandbook = document.getElementById('btnOpenHandbook');
+  const handbookModal = document.getElementById('handbookModal');
+  const closeHandbookModal = document.getElementById('closeHandbookModal');
+  const btnPrintHandbookPdf = document.getElementById('btnPrintHandbookPdf');
+
+  if (btnOpenHandbook && handbookModal) {
+    btnOpenHandbook.addEventListener('click', () => {
+      handbookModal.classList.remove('hidden');
+    });
+  }
+
+  if (closeHandbookModal && handbookModal) {
+    closeHandbookModal.addEventListener('click', () => {
+      handbookModal.classList.add('hidden');
+    });
+  }
+
+  // OS Tab Switching in Handbook Modal
+  const handbookOsTabs = document.querySelectorAll('#handbookModal .console-tab-btn[data-os]');
+  const osCommands = {
+    powershell: {
+      cmdWizard: 'npx @mahe_pkm/buzl-capi',
+      cmdGui: 'npx @mahe_pkm/buzl-capi --gui',
+      cmdBackup: 'npx @mahe_pkm/buzl-capi --backup "Pre-Launch Baseline"',
+      cmdList: 'npx @mahe_pkm/buzl-capi --list-backups',
+      cmdRestore: 'npx @mahe_pkm/buzl-capi --restore',
+      cmdUninstall: 'npx @mahe_pkm/buzl-capi --uninstall'
+    },
+    cmd: {
+      cmdWizard: 'npx @mahe_pkm/buzl-capi',
+      cmdGui: 'npx @mahe_pkm/buzl-capi --gui',
+      cmdBackup: 'npx @mahe_pkm/buzl-capi --backup "Pre-Launch Baseline"',
+      cmdList: 'npx @mahe_pkm/buzl-capi --list-backups',
+      cmdRestore: 'npx @mahe_pkm/buzl-capi --restore',
+      cmdUninstall: 'npx @mahe_pkm/buzl-capi --uninstall'
+    },
+    macos: {
+      cmdWizard: 'npx @mahe_pkm/buzl-capi',
+      cmdGui: 'npx @mahe_pkm/buzl-capi --gui',
+      cmdBackup: 'npx @mahe_pkm/buzl-capi --backup "Pre-Launch Baseline"',
+      cmdList: 'npx @mahe_pkm/buzl-capi --list-backups',
+      cmdRestore: 'npx @mahe_pkm/buzl-capi --restore',
+      cmdUninstall: 'npx @mahe_pkm/buzl-capi --uninstall'
+    },
+    linux: {
+      cmdWizard: 'npx @mahe_pkm/buzl-capi',
+      cmdGui: 'npx @mahe_pkm/buzl-capi --gui',
+      cmdBackup: 'npx @mahe_pkm/buzl-capi --backup "Pre-Launch Baseline"',
+      cmdList: 'npx @mahe_pkm/buzl-capi --list-backups',
+      cmdRestore: 'npx @mahe_pkm/buzl-capi --restore',
+      cmdUninstall: 'npx @mahe_pkm/buzl-capi --uninstall'
+    }
+  };
+
+  handbookOsTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const os = tab.dataset.os;
+      handbookOsTabs.forEach(t => t.classList.toggle('active', t === tab));
+      const cmds = osCommands[os] || osCommands.powershell;
+      Object.keys(cmds).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = cmds[id];
+      });
+    });
+  });
+
+  // Copy Buttons for Handbook Command Blocks
+  document.querySelectorAll('.btn-copy-cli').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.dataset.target;
+      const targetEl = document.getElementById(targetId);
+      if (targetEl) {
+        navigator.clipboard.writeText(targetEl.textContent).then(() => {
+          btn.innerHTML = '<svg class="icon-xs" style="color:var(--color-success-accessible);"><use href="#icon-check"/></svg> <span>Copied!</span>';
+          showToast('Copied', 'Command copied to clipboard', 'success');
+          setTimeout(() => {
+            btn.innerHTML = '<svg class="icon-xs"><use href="#icon-clipboard"/></svg> <span>Copy</span>';
+          }, 2000);
+        });
+      }
+    });
+  });
+
+  // Print Handbook as PDF (100% vector copyable text via isolated iframe)
+  if (btnPrintHandbookPdf) {
+    btnPrintHandbookPdf.addEventListener('click', () => {
+      const printFrame = document.createElement('iframe');
+      printFrame.style.position = 'fixed';
+      printFrame.style.right = '0';
+      printFrame.style.bottom = '0';
+      printFrame.style.width = '0';
+      printFrame.style.height = '0';
+      printFrame.style.border = 'none';
+      printFrame.src = '/handbook';
+      document.body.appendChild(printFrame);
+
+      printFrame.onload = () => {
+        setTimeout(() => {
+          printFrame.contentWindow.focus();
+          printFrame.contentWindow.print();
+          setTimeout(() => {
+            if (printFrame.parentNode) printFrame.parentNode.removeChild(printFrame);
+          }, 2000);
+        }, 400);
+      };
+
+      showToast('Exporting Handbook PDF', 'Print dialog opened. Select "Save as PDF"', 'info');
     });
   }
 

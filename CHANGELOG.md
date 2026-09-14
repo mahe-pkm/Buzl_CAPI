@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.3] - 2026-09-14
+
+### Added & Redesigned
+- **Locations Design System Web GUI**:
+  - Implemented token-driven UI matching `web.gobuzl.com` with `--font-family-primary`, structured spacing, and accessible semantic colors.
+  - Full WCAG 2.2 AA compliance: high-contrast interactive borders (3:1 minimum), clear 2px focus rings (`--color-brand-primary`), and minimum 24x24px click targets.
+- **Pixel-Perfect Official Brand Vectors**:
+  - **Buzl Emblem (`#icon-brand-buzl`)**: Extracted directly from production asset `buzl-logo.svg`, rendering the authentic 3-person lead circular mark in crisp white on primary action buttons and brand navy elsewhere.
+  - **Meta Logo (`#icon-brand-meta`)**: Replaced clipped SVG with official unclipped infinity ribbon (`viewBox="0 0 16 16"`).
+  - **Google Tag Manager Logo (`#icon-brand-gtm`)**: Replaced distorted shapes with official geometric vectors (`viewBox="0 0 256 256"`).
+  - **WhatsApp Logo (`#icon-brand-whatsapp`)**: Replaced generic dialer badge with official speech bubble mark (`#25D366`) and white telephone handset (`#FFFFFF`).
+- **Structured CAPI Staging Console Log**:
+  - Implemented `formatCapiExecutionLog` in `tester.js` and `app.js` matching user staging reference layout:
+    - Standardized audit borders, status tags, domain labels, and UUID lead identifiers.
+    - Semantic syntax highlighting for keys, values, URLs, JSON payloads, and HTTP 201 Created pills.
+- **Automated Verification Reporting (PDF & JSON)**:
+  - Added one-click structured JSON export (`#btnExportJson`).
+  - Added native A4 printable PDF export (`#btnExportPdf`) via isolated iframe with corporate letterhead and embedded audit logs.
+- **Blocked & Copyable Multi-OS User Handbook**:
+  - Created `USER_HANDBOOK.md` in repository root with copy-ready command blocks for Windows (PowerShell & CMD), macOS (zsh), and Linux (bash).
+  - Created standalone printable `USER_HANDBOOK.html` with 1-click **"Print / Save as PDF"** export (100% vector copyable text).
+  - Added `--handbook` flag to `bin/cli.js` to open the handbook in the default browser.
+  - Added Handbook modal inside the Web GUI with live copy buttons.
+
+---
+
 ## [0.1.2] - 2026-09-14
 
 ### Changed & Improved

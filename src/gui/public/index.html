@@ -124,13 +124,17 @@
           <div class="brand-titles">
             <div class="brand-headline">
               <h1>Conversions API &amp; Form Tracking Suite</h1>
-              <span class="version-badge">v1.0.0</span>
+              <span class="version-badge">v0.1.3</span>
             </div>
             <p class="subtitle">Automated GTM, Meta CAPI, Google Sheets CRM &amp; Zoho Web-to-Lead integration.</p>
           </div>
         </div>
 
         <div class="header-actions">
+          <button type="button" id="btnOpenHandbook" class="btn btn-secondary" title="View Cross-Platform User Handbook &amp; Command Reference">
+            <svg class="icon-sm" aria-hidden="true"><use href="#icon-clipboard"/></svg>
+            <span>Handbook</span>
+          </button>
           <button type="button" id="btnOpenBackups" class="btn btn-secondary" title="View snapshot history &amp; point-in-time restore">
             <svg class="icon-sm" aria-hidden="true"><use href="#icon-database"/></svg>
             <span>Snapshots</span>
@@ -868,6 +872,115 @@
             <span>Copy Code</span>
           </button>
           <pre><code id="scriptCodeDisplay">Loading script...</code></pre>
+        </div>
+      </div>
+    </div>
+  <!-- Cross-Platform User Handbook Modal -->
+  <div id="handbookModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <div class="card-title">
+          <div class="card-icon-badge badge-info">
+            <svg class="brand-icon" aria-hidden="true"><use href="#icon-clipboard"/></svg>
+          </div>
+          <div>
+            <h3>Cross-Platform User Handbook &amp; CLI Codes</h3>
+            <span class="card-subtext">Blocked, copy-ready commands for Windows, macOS, and Linux</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" id="btnPrintHandbookPdf" class="btn btn-primary btn-sm" title="Print or save entire handbook as PDF">
+            <svg class="icon-xs" aria-hidden="true"><use href="#icon-printer"/></svg>
+            <span>Print / Save as PDF</span>
+          </button>
+          <a href="/handbook" target="_blank" class="btn btn-secondary btn-sm" title="Open standalone handbook in new tab">
+            <span>Full Page</span>
+          </a>
+          <button type="button" id="closeHandbookModal" class="close-btn" aria-label="Close handbook dialog">&times;</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: var(--font-size-sm); color: var(--color-text-inverse); margin-bottom: var(--space-12);">
+          Select your operating system to reveal copy-ready command blocks with zero prompt formatting errors:
+        </p>
+
+        <!-- OS Selector Tabs -->
+        <div class="console-tab-nav" style="margin-bottom: 16px;">
+          <button type="button" class="console-tab-btn active" data-os="powershell">Windows (PowerShell)</button>
+          <button type="button" class="console-tab-btn" data-os="cmd">Windows (CMD)</button>
+          <button type="button" class="console-tab-btn" data-os="macos">macOS (Terminal)</button>
+          <button type="button" class="console-tab-btn" data-os="linux">Linux (bash)</button>
+        </div>
+
+        <!-- Command Blocks -->
+        <div id="handbookCommandCards">
+          <!-- Commands rendered dynamically or present in template -->
+          <div class="handbook-command-card" style="margin-bottom: 12px; border: 1px solid var(--color-border-muted); border-radius: var(--radius-sm); padding: 12px; background: var(--color-surface-raised);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <strong style="font-size: 12.5px; color: var(--color-brand-primary);">1. Interactive Terminal Setup Wizard</strong>
+              <button type="button" class="copy-btn btn-copy-cli" data-target="cmdWizard">
+                <svg class="icon-xs"><use href="#icon-clipboard"/></svg>
+                <span>Copy</span>
+              </button>
+            </div>
+            <pre style="background: #1a2332; color: #e2e8f0; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 11.5px; overflow-x: auto;"><code id="cmdWizard">npx @mahe_pkm/buzl-capi</code></pre>
+          </div>
+
+          <div class="handbook-command-card" style="margin-bottom: 12px; border: 1px solid var(--color-border-muted); border-radius: var(--radius-sm); padding: 12px; background: var(--color-surface-raised);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <strong style="font-size: 12.5px; color: var(--color-brand-primary);">2. Local Web GUI Dashboard (Port 3333)</strong>
+              <button type="button" class="copy-btn btn-copy-cli" data-target="cmdGui">
+                <svg class="icon-xs"><use href="#icon-clipboard"/></svg>
+                <span>Copy</span>
+              </button>
+            </div>
+            <pre style="background: #1a2332; color: #e2e8f0; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 11.5px; overflow-x: auto;"><code id="cmdGui">npx @mahe_pkm/buzl-capi --gui</code></pre>
+          </div>
+
+          <div class="handbook-command-card" style="margin-bottom: 12px; border: 1px solid var(--color-border-muted); border-radius: var(--radius-sm); padding: 12px; background: var(--color-surface-raised);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <strong style="font-size: 12.5px; color: var(--color-brand-primary);">3. Create Named Snapshot Backup</strong>
+              <button type="button" class="copy-btn btn-copy-cli" data-target="cmdBackup">
+                <svg class="icon-xs"><use href="#icon-clipboard"/></svg>
+                <span>Copy</span>
+              </button>
+            </div>
+            <pre style="background: #1a2332; color: #e2e8f0; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 11.5px; overflow-x: auto;"><code id="cmdBackup">npx @mahe_pkm/buzl-capi --backup "Pre-Launch Baseline"</code></pre>
+          </div>
+
+          <div class="handbook-command-card" style="margin-bottom: 12px; border: 1px solid var(--color-border-muted); border-radius: var(--radius-sm); padding: 12px; background: var(--color-surface-raised);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <strong style="font-size: 12.5px; color: var(--color-brand-primary);">4. List Saved Snapshots on Disk</strong>
+              <button type="button" class="copy-btn btn-copy-cli" data-target="cmdList">
+                <svg class="icon-xs"><use href="#icon-clipboard"/></svg>
+                <span>Copy</span>
+              </button>
+            </div>
+            <pre style="background: #1a2332; color: #e2e8f0; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 11.5px; overflow-x: auto;"><code id="cmdList">npx @mahe_pkm/buzl-capi --list-backups</code></pre>
+          </div>
+
+          <div class="handbook-command-card" style="margin-bottom: 12px; border: 1px solid var(--color-border-muted); border-radius: var(--radius-sm); padding: 12px; background: var(--color-surface-raised);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <strong style="font-size: 12.5px; color: var(--color-brand-primary);">5. Revert / Rollback to Snapshot</strong>
+              <button type="button" class="copy-btn btn-copy-cli" data-target="cmdRestore">
+                <svg class="icon-xs"><use href="#icon-clipboard"/></svg>
+                <span>Copy</span>
+              </button>
+            </div>
+            <pre style="background: #1a2332; color: #e2e8f0; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 11.5px; overflow-x: auto;"><code id="cmdRestore">npx @mahe_pkm/buzl-capi --restore</code></pre>
+          </div>
+
+          <div class="handbook-command-card" style="margin-bottom: 12px; border: 1px solid var(--color-border-muted); border-radius: var(--radius-sm); padding: 12px; background: var(--color-surface-raised);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <strong style="font-size: 12.5px; color: var(--color-brand-primary);">6. Clean Tracking Uninstallation</strong>
+              <button type="button" class="copy-btn btn-copy-cli" data-target="cmdUninstall">
+                <svg class="icon-xs"><use href="#icon-clipboard"/></svg>
+                <span>Copy</span>
+              </button>
+            </div>
+            <pre style="background: #1a2332; color: #e2e8f0; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 11.5px; overflow-x: auto;"><code id="cmdUninstall">npx @mahe_pkm/buzl-capi --uninstall</code></pre>
+          </div>
         </div>
       </div>
     </div>

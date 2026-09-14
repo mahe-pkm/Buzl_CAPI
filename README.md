@@ -1,12 +1,25 @@
-# ⚡ Buzl Tracker & Conversions API (`buzl-tracker`)
+# ⚡ Buzl Tracker & Conversions API (`@mahe_pkm/buzl-capi`)
 
-[![npm version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/mahe-pkm/Buzl_CAPI)
+[![npm version](https://img.shields.io/badge/version-0.1.3-blue.svg)](https://github.com/mahe-pkm/Buzl_CAPI)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen.svg)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests: Passing](https://img.shields.io/badge/tests-37%2F37%20passing-success.svg)](tests/)
+[![Tests: Passing](https://img.shields.io/badge/tests-38%2F38%20passing-success.svg)](tests/)
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-0%20external-purple.svg)](package.json)
+[![User Handbook](https://img.shields.io/badge/docs-User%20Handbook%20(PDF)-orange.svg)](USER_HANDBOOK.md)
 
-> **All-in-one Node.js CLI & Local Web GUI for automated Google Tag Manager (GTM), Meta Pixel & Conversions API (CAPI), Google Sheets CRM Multi-Tab Sync, and Zoho CRM injection with self-testing.**
+> **All-in-one Node.js CLI & Local Web GUI for automated Google Tag Manager (GTM), Meta Pixel & Conversions API (CAPI), Google Sheets CRM Multi-Tab Sync, and Zoho CRM injection with self-testing and automated PDF audit reporting.**
+
+---
+
+## 📖 Official User Handbook & Multi-OS Commands
+
+Looking for copy-ready command blocks for **Windows (PowerShell & CMD)**, **macOS**, and **Linux**?
+- 📘 Read the full markdown guide: [**USER_HANDBOOK.md**](USER_HANDBOOK.md)
+- 🖨️ Open and print or save the handbook as a PDF: [**USER_HANDBOOK.html**](USER_HANDBOOK.html)
+- 🚀 Or run directly from terminal:
+  ```bash
+  npx @mahe_pkm/buzl-capi --handbook
+  ```
 
 ---
 
@@ -53,47 +66,62 @@ When deploying or optimizing lead-generation landing pages, configuring analytic
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start by Operating System
 
-Run inside your landing page project folder (or pass directory as argument):
+Run inside your landing page project folder (or pass directory path as an argument):
 
-### Option 1: Interactive Terminal Wizard
-```bash
-npx buzl-tracker
-```
-Or target a specific directory:
-```bash
-npx buzl-tracker "path/to/my-website"
+### 🪟 Windows (PowerShell)
+```powershell
+# Interactive Terminal Setup
+npx @mahe_pkm/buzl-capi
+
+# Local Web GUI Dashboard (port 3333)
+npx @mahe_pkm/buzl-capi --gui
+
+# Create Snapshot Backup
+npx @mahe_pkm/buzl-capi --backup "Pre-Launch Baseline"
+
+# Rollback to Previous Snapshot
+npx @mahe_pkm/buzl-capi --restore
+
+# Clean Uninstallation of All Tracking
+npx @mahe_pkm/buzl-capi --uninstall
 ```
 
-### Option 2: Local Web GUI Dashboard
-Launch the browser dashboard on `http://localhost:3333`:
+### 🍎 macOS (Terminal / zsh)
 ```bash
-npx buzl-tracker --gui
-```
-Or target a specific directory:
-```bash
-npx buzl-tracker "path/to/my-website" --gui
+# Interactive Terminal Setup
+npx @mahe_pkm/buzl-capi
+
+# Local Web GUI Dashboard (port 3333)
+npx @mahe_pkm/buzl-capi --gui
+
+# Create Snapshot Backup
+npx @mahe_pkm/buzl-capi --backup "Pre-Launch Baseline"
+
+# Rollback to Previous Snapshot
+npx @mahe_pkm/buzl-capi --restore
+
+# Clean Uninstallation of All Tracking
+npx @mahe_pkm/buzl-capi --uninstall
 ```
 
-### Option 3: Instant Snapshot Backup & Restore
-Create a named snapshot before making changes:
+### 🐧 Linux (bash / sh)
 ```bash
-npx buzl-tracker --backup "Pre-Launch Baseline"
-```
-List all saved snapshots:
-```bash
-npx buzl-tracker --list-backups
-```
-Rollback to a specific snapshot or latest:
-```bash
-npx buzl-tracker --restore "Pre-Launch Baseline"
-# or simply revert to latest:
-npx buzl-tracker --restore
-```
-Cleanly remove all injected tracking from your site:
-```bash
-npx buzl-tracker --uninstall
+# Interactive Terminal Setup
+npx @mahe_pkm/buzl-capi
+
+# Local Web GUI Dashboard (port 3333)
+npx @mahe_pkm/buzl-capi --gui
+
+# Create Snapshot Backup
+npx @mahe_pkm/buzl-capi --backup "Pre-Launch Baseline"
+
+# Rollback to Previous Snapshot
+npx @mahe_pkm/buzl-capi --restore
+
+# Clean Uninstallation of All Tracking
+npx @mahe_pkm/buzl-capi --uninstall
 ```
 
 ---
@@ -102,13 +130,14 @@ npx buzl-tracker --uninstall
 
 | Command / Flag | Alias | Description |
 |---|---|---|
-| `npx buzl-tracker` | — | Launches the step-by-step interactive terminal wizard. |
-| `npx buzl-tracker --gui` | `-g` | Launches local Web GUI dashboard on port 3333. |
-| `npx buzl-tracker --backup [name]` | `-b` | Creates a point-in-time snapshot backup of all HTML files. |
-| `npx buzl-tracker --list-backups` | — | Lists all saved snapshot backups on disk. |
-| `npx buzl-tracker --restore [name]` | `-r`, `--rollback` | Reverts all HTML files to the named snapshot (or latest). |
-| `npx buzl-tracker --uninstall` | `-u` | Cleanly strips GTM, Meta Pixel, runtime scripts, and form hooks. |
-| `npx buzl-tracker --help` | `-h` | Displays the help manual and CLI options. |
+| `npx @mahe_pkm/buzl-capi [dir]` | `npx buzl-tracker` | Launches the step-by-step interactive terminal wizard. |
+| `npx @mahe_pkm/buzl-capi --gui` | `-g` | Launches local Web GUI dashboard on port 3333. |
+| `npx @mahe_pkm/buzl-capi --backup [name]` | `-b` | Creates a point-in-time snapshot backup of all HTML files. |
+| `npx @mahe_pkm/buzl-capi --list-backups` | — | Lists all saved snapshot backups on disk. |
+| `npx @mahe_pkm/buzl-capi --restore [name]` | `-r`, `--rollback` | Reverts all HTML files to the named snapshot (or latest). |
+| `npx @mahe_pkm/buzl-capi --uninstall` | `-u` | Cleanly strips GTM, Meta Pixel, runtime scripts, and form hooks. |
+| `npx @mahe_pkm/buzl-capi --handbook` | — | Opens the printable User Handbook in your default browser. |
+| `npx @mahe_pkm/buzl-capi --help` | `-h` | Displays the help manual and CLI options. |
 
 ---
 
