@@ -26,9 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Initializes Meta Pixel & Meta Conversions API (CAPI) client runtime with cross-event `leadId` deduplication.
   - Hooks form submissions via non-destructive JavaScript event interceptors with zero HTML layout breakage.
   - Supports selective service uninstallation (`removeService`) and complete uninstallation (`--uninstall`).
-- **Snapshot Rollback & Backup System**:
-  - Automatically creates timestamped snapshot backups before touching any HTML file.
-  - Supports named snapshots (`--backup [name]`), backup inspection (`--list-backups`), and 1-click restore (`--restore [name]`).
+- **Unified `.buzl/snapshots/` Rollback & Backup System**:
+  - Unifies backup storage under `.buzl/snapshots/<timestamp>_<hash>` to prevent root-level clutter and align with `@mahe_pkm/buzl-html-editor`.
+  - Computes 8-character cryptographic SHA-1 content hashes for tamper-proof verification.
+  - Automatically creates snapshots before modifying any file, with instant rollback (`--restore [name]`).
+  - Supports named snapshots (`--backup [name]`), inspection (`--list-backups`), and backward compatibility with legacy backups.
 
 #### 📊 Resilient Google Sheets CRM Engine (`GoogleAppsScript.gs`)
 - **Forward Operational Layout**:

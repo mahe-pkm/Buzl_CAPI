@@ -199,6 +199,8 @@ async function runTests() {
     // Create a pristine snapshot before modifying
     const snapResult = createBackup(fixtureDir, 'Pristine Multipage Baseline');
     assert.ok(snapResult.success, 'Baseline snapshot creation must succeed');
+    assert.ok(snapResult.hash && snapResult.hash.length === 8, 'Must return 8-char SHA content hash');
+    assert.ok(fs.existsSync(path.join(fixtureDir, '.buzl', 'snapshots')), '.buzl/snapshots directory must be created');
 
     // Remove all tracking
     const uninst = removeTracking(fixtureDir);

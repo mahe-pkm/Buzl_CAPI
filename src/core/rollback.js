@@ -1,10 +1,37 @@
 /**
- * Backup & Rollback Manager
- * Provides 100% safe file backups and instant restoration
+ * ============================================================================
+ * BUZL BACKUP & SNAPSHOT MANAGER
+ * Provides 100% safe file snapshots with SHA content hashing inside `.buzl/snapshots/`
+ * 
+ * Copyright (c) 2026 Buzl Digital Solutions
+ * Licensed under the MIT License
+ * ============================================================================
  */
+
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
+/**
+ * Compute a deterministic SHA-1 content hash across all candidate files
+ */
+function computeFilesHash(files, rootDir) {
+  const hashSum = crypto.createHash('sha1');
+  for (const filePath of files) {
+    if (fs.existsSync(filePath)) {
+      hashSum.update(path.relative(rootDir, filePath));
+      try {
+        hashSum.update(fs.readFileSync(filePath));
+      } catch (e) {}
+    }
+  }
+  return hashSum.digest('hex').substring(0, 8);
+}
+
+/**
+ * Create a point-in-time snapshot backup
+ * Stored in `<rootDir>/.buzl/snapshots/<timestamp>_<hash>/`
+ */
 function createBackup(arg1, arg2, arg3 = '') {
   let files;
   let rootDir;
@@ -25,11 +52,18 @@ function createBackup(arg1, arg2, arg3 = '') {
   }
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const backupDir = path.join(rootDir, `.buzl-backup-${timestamp}`);
+  const hash = computeFilesHash(files, rootDir) || '00000000';
+  const dirName = `${timestamp}_${hash}`;
+
+  // Dedicated unified .buzl/snapshots directory
+  const snapshotsDir = path.join(rootDir, '.buzl', 'snapshots');
+  const backupDir = path.join(snapshotsDir, dirName);
   fs.mkdirSync(backupDir, { recursive: true });
 
   const manifest = {
-    name: (backupName || '').trim() || `Snapshot ${new Date().toLocaleTimeString()}`,
+    id: dirName,
+    hash: hash,
+    name: (backupName || '').trim() || `Snapshot ${new Date().toLocaleTimeString()} [${hash}]`,
     timestamp: new Date().toISOString(),
     files: []
   };
@@ -49,50 +83,111 @@ function createBackup(arg1, arg2, arg3 = '') {
     'utf8'
   );
 
-  return { success: true, backupDir, timestamp, name: manifest.name, fileCount: manifest.files.length };
+  return {
+    success: true,
+    backupDir,
+    dirName,
+    hash,
+    timestamp: manifest.timestamp,
+    name: manifest.name,
+    fileCount: manifest.files.length
+  };
 }
 
+/**
+ * List all available snapshot backups
+ * Checks `.buzl/snapshots/` first, plus legacy `.buzl-backup-*` folders
+ */
 function listBackups(rootDir) {
-  try {
-    const entries = fs.readdirSync(rootDir);
-    const backups = entries
-      .filter(e => e.startsWith('.buzl-backup-'))
-      .map(e => {
-        const dirPath = path.join(rootDir, e);
-        let manifest = null;
-        try {
-          const mPath = path.join(dirPath, 'backup-manifest.json');
-          if (fs.existsSync(mPath)) {
-            manifest = JSON.parse(fs.readFileSync(mPath, 'utf8'));
-          }
-        } catch (err) {}
-        return {
-          dirName: e,
-          fullPath: dirPath,
-          name: (manifest && manifest.name) || e.replace('.buzl-backup-', ''),
-          timestamp: (manifest && manifest.timestamp) || '',
-          filesCount: (manifest && manifest.files && manifest.files.length) || 0,
-          manifest
-        };
-      })
-      .sort((a, b) => b.dirName.localeCompare(a.dirName));
-    return backups;
-  } catch (e) {
-    return [];
+  const allBackups = [];
+
+  // 1. Primary: Check .buzl/snapshots/
+  const snapshotsDir = path.join(rootDir, '.buzl', 'snapshots');
+  if (fs.existsSync(snapshotsDir)) {
+    try {
+      const entries = fs.readdirSync(snapshotsDir);
+      for (const e of entries) {
+        const dirPath = path.join(snapshotsDir, e);
+        if (fs.statSync(dirPath).isDirectory()) {
+          let manifest = null;
+          try {
+            const mPath = path.join(dirPath, 'backup-manifest.json');
+            if (fs.existsSync(mPath)) {
+              manifest = JSON.parse(fs.readFileSync(mPath, 'utf8'));
+            }
+          } catch (err) {}
+
+          allBackups.push({
+            id: (manifest && manifest.id) || e,
+            dirName: e,
+            hash: (manifest && manifest.hash) || (e.split('_')[1] || ''),
+            fullPath: dirPath,
+            name: (manifest && manifest.name) || e,
+            timestamp: (manifest && manifest.timestamp) || '',
+            filesCount: (manifest && manifest.files && manifest.files.length) || 0,
+            isLegacy: false,
+            manifest
+          });
+        }
+      }
+    } catch (e) {}
   }
+
+  // 2. Fallback: Check legacy root-level `.buzl-backup-*` directories
+  try {
+    const rootEntries = fs.readdirSync(rootDir);
+    for (const e of rootEntries) {
+      if (e.startsWith('.buzl-backup-')) {
+        const dirPath = path.join(rootDir, e);
+        if (fs.statSync(dirPath).isDirectory()) {
+          let manifest = null;
+          try {
+            const mPath = path.join(dirPath, 'backup-manifest.json');
+            if (fs.existsSync(mPath)) {
+              manifest = JSON.parse(fs.readFileSync(mPath, 'utf8'));
+            }
+          } catch (err) {}
+
+          allBackups.push({
+            id: e,
+            dirName: e,
+            hash: (manifest && manifest.hash) || '',
+            fullPath: dirPath,
+            name: (manifest && manifest.name) || e.replace('.buzl-backup-', ''),
+            timestamp: (manifest && manifest.timestamp) || '',
+            filesCount: (manifest && manifest.files && manifest.files.length) || 0,
+            isLegacy: true,
+            manifest
+          });
+        }
+      }
+    }
+  } catch (e) {}
+
+  // Sort newest first
+  allBackups.sort((a, b) => b.dirName.localeCompare(a.dirName));
+  return allBackups;
 }
 
-function restoreBackup(rootDir, backupDirName) {
+/**
+ * Restore a specific snapshot or 'latest'
+ */
+function restoreBackup(rootDir, identifier) {
   const backups = listBackups(rootDir);
   if (backups.length === 0) {
     return { success: false, message: 'No backups found to restore.' };
   }
 
   let targetBackup = backups[0];
-  if (backupDirName && backupDirName !== 'latest') {
-    targetBackup = backups.find(b => b.dirName === backupDirName || b.name === backupDirName);
+  if (identifier && identifier !== 'latest') {
+    targetBackup = backups.find(b =>
+      b.dirName === identifier ||
+      b.name === identifier ||
+      b.hash === identifier ||
+      b.id === identifier
+    );
     if (!targetBackup) {
-      return { success: false, message: `Backup "${backupDirName}" not found.` };
+      return { success: false, message: `Backup "${identifier}" not found.` };
     }
   }
 
@@ -117,31 +212,46 @@ function restoreBackup(rootDir, backupDirName) {
     success: true,
     backupUsed: targetBackup.dirName,
     backupName: targetBackup.name,
+    hash: targetBackup.hash,
     restoredCount,
-    message: `Successfully restored ${restoredCount} file(s) from "${targetBackup.name}" (${targetBackup.dirName}).`
+    message: `Successfully restored ${restoredCount} file(s) from "${targetBackup.name}" [${targetBackup.hash || targetBackup.dirName}].`
   };
 }
 
+/**
+ * Restore the latest snapshot
+ */
 function restoreLatestBackup(rootDir) {
   return restoreBackup(rootDir, 'latest');
 }
 
-function deleteBackup(rootDir, backupDirName) {
-  if (!backupDirName || !backupDirName.startsWith('.buzl-backup-')) {
-    return { success: false, message: 'Invalid backup directory name.' };
+/**
+ * Delete a specific backup
+ */
+function deleteBackup(rootDir, identifier) {
+  const backups = listBackups(rootDir);
+  const target = backups.find(b =>
+    b.dirName === identifier ||
+    b.name === identifier ||
+    b.id === identifier ||
+    b.hash === identifier
+  );
+
+  if (!target) {
+    return { success: false, message: `Backup "${identifier}" not found.` };
   }
-  const dirPath = path.join(rootDir, backupDirName);
-  if (!fs.existsSync(dirPath)) {
-    return { success: false, message: 'Backup directory does not exist.' };
-  }
+
   try {
-    fs.rmSync(dirPath, { recursive: true, force: true });
-    return { success: true, message: `Backup ${backupDirName} deleted successfully.` };
+    fs.rmSync(target.fullPath, { recursive: true, force: true });
+    return { success: true, message: `Backup "${target.name}" deleted successfully.` };
   } catch (e) {
     return { success: false, message: e.message };
   }
 }
 
+/**
+ * Create a manual named backup
+ */
 function manualBackup(rootDir, backupName = '') {
   const { findHtmlFiles } = require('./scanner');
   const files = findHtmlFiles(rootDir);
@@ -152,14 +262,17 @@ function manualBackup(rootDir, backupName = '') {
   return {
     success: true,
     backupDir: result.backupDir,
+    dirName: result.dirName,
+    hash: result.hash,
     name: result.name,
     fileCount: result.fileCount,
-    message: `Backup "${result.name}" created successfully with ${result.fileCount} file(s) in ${path.basename(result.backupDir)}.`
+    message: `Snapshot "${result.name}" created with ${result.fileCount} file(s) [SHA: ${result.hash}].`
   };
 }
 
 module.exports = {
   createBackup,
+  computeFilesHash,
   listBackups,
   restoreBackup,
   restoreLatestBackup,

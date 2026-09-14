@@ -2,6 +2,7 @@
 node_modules/
 
 # Buzl Automated Backups & Snapshots
+.buzl/
 .buzl-backup*
 Pristine Multipage Baseline/
 

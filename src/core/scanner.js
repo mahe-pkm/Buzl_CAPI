@@ -32,7 +32,7 @@ function findHtmlFiles(dir, ignoredDirs = DEFAULT_IGNORED_DIRS) {
       const stat = fs.statSync(fullPath);
 
       if (stat && stat.isDirectory()) {
-        if (file.startsWith('.buzl-backup') || ignoredDirs.includes(file)) {
+        if (file === '.buzl' || file.startsWith('.buzl') || ignoredDirs.includes(file)) {
           continue;
         }
         results = results.concat(findHtmlFiles(fullPath, ignoredDirs));

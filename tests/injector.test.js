@@ -103,7 +103,7 @@ async function runAsyncTests() {
     // Clean up created backups in test-sample
     const entries = fs.readdirSync(sampleDir);
     entries.forEach(e => {
-      if (e.startsWith('.buzl-backup-') || e === 'assets' || e === 'Buzl_GoogleAppsScript_Template.gs') {
+      if (e.startsWith('.buzl-backup-') || e === '.buzl' || e === 'assets' || e === 'Buzl_GoogleAppsScript_Template.gs') {
         fs.rmSync(path.join(sampleDir, e), { recursive: true, force: true });
       }
     });
@@ -139,6 +139,8 @@ async function runAsyncTests() {
     const mb = manualBackup(sampleDir, customName);
     assert.ok(mb.success, 'manualBackup with custom name should succeed');
     assert.strictEqual(mb.name, customName, 'Backup name should match');
+    assert.ok(mb.hash && mb.hash.length === 8, 'Must compute 8-char SHA content hash');
+    assert.ok(mb.backupDir.includes('.buzl'), 'Backup must be placed inside .buzl directory');
 
     const backups = listBackups(sampleDir);
     const found = backups.find(b => b.name === customName);
@@ -239,7 +241,7 @@ async function runAsyncTests() {
   // Final cleanup of test-sample
   const entries = fs.readdirSync(sampleDir);
   entries.forEach(e => {
-    if (e.startsWith('.buzl-backup-') || e === 'assets' || e === 'Buzl_GoogleAppsScript_Template.gs') {
+    if (e.startsWith('.buzl-backup-') || e === '.buzl' || e === 'assets' || e === 'Buzl_GoogleAppsScript_Template.gs') {
       fs.rmSync(path.join(sampleDir, e), { recursive: true, force: true });
     }
   });

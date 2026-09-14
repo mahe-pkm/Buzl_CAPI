@@ -157,6 +157,28 @@ npx buzl-tracker --uninstall
 
 ---
 
+## 💾 Unified `.buzl/snapshots/` Storage & Content Hashing
+
+All snapshot backups are stored inside a single hidden `.buzl` directory in your website root:
+
+```
+Your_Website/
+├── index.html
+├── assets/
+└── .buzl/                                  <-- Shared with @mahe_pkm/buzl-html-editor
+    └── snapshots/
+        └── 2026-09-14T10-45-12_a8f3b9c2/   <-- Timestamp + SHA-1 Content Hash
+            ├── backup-manifest.json        <-- Full metadata & integrity hash
+            └── index.html                  <-- Exact pre-injection copy
+```
+
+- **Zero Root Clutter**: Unifies storage under `.buzl` alongside other Buzl ecosystem tools (such as `@mahe_pkm/buzl-html-editor`).
+- **Cryptographic Content Hashing**: Computes an 8-character SHA-1 content hash across all HTML files for tamper-proof verification.
+- **Safe Across Folder Moves**: Backups travel with the website using relative paths.
+- **Backward Compatible**: Automatically detects and restores from legacy `.buzl-backup-*` folders if present.
+
+---
+
 ## 🌐 Multi-Page Directory Support
 
 For multi-page websites with nested directories (e.g. `/services/sports-physio.html`, `/about/team/doctor.html`):
