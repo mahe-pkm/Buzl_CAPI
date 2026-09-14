@@ -50,7 +50,40 @@ document.addEventListener('DOMContentLoaded', () => {
   const copyScriptCode = document.getElementById('copyScriptCode');
   const scriptCodeDisplay = document.getElementById('scriptCodeDisplay');
 
+  // Custom Confirm Modal elements
+  const customConfirmModal = document.getElementById('customConfirmModal');
+  const confirmModalTitle = document.getElementById('confirmModalTitle');
+  const confirmModalMessage = document.getElementById('confirmModalMessage');
+  const confirmModalConfirmBtn = document.getElementById('confirmModalConfirmBtn');
+  const confirmModalCancelBtn = document.getElementById('confirmModalCancelBtn');
+  const closeConfirmModal = document.getElementById('closeConfirmModal');
+
+  // Toast Container
+  const toastContainer = document.getElementById('toastContainer');
+
+  // Verification Report & Export Elements
+  const btnExportJson = document.getElementById('btnExportJson');
+  const btnExportPdf = document.getElementById('btnExportPdf');
+  const kpiTotalChecks = document.getElementById('kpiTotalChecks');
+  const kpiPassedChecks = document.getElementById('kpiPassedChecks');
+  const kpiFailedChecks = document.getElementById('kpiFailedChecks');
+  const kpiCapiStatus = document.getElementById('kpiCapiStatus');
+
+  // CAPI Inspector Elements
+  const capiInspectStatusBadge = document.getElementById('capiInspectStatusBadge');
+  const capiInspectLatencyBadge = document.getElementById('capiInspectLatencyBadge');
+  const capiPayloadDisplay = document.getElementById('capiPayloadDisplay');
+  const capiResponseDisplay = document.getElementById('capiResponseDisplay');
+  const capiLogsDisplay = document.getElementById('capiLogsDisplay');
+  const btnCopyCapiPayload = document.getElementById('btnCopyCapiPayload');
+  const btnCopyCapiResponse = document.getElementById('btnCopyCapiResponse');
+  const btnCopyCapiLogs = document.getElementById('btnCopyCapiLogs');
+
+  let currentVerificationReport = null;
+  let currentCapiData = null;
+
   let scriptTemplateText = '';
+  let pendingConfirmCallback = null;
 
   const siteLocationInput = document.getElementById('siteLocation');
   const columnHierarchyPreview = document.getElementById('columnHierarchyPreview');
@@ -59,6 +92,575 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeDynamicFields = [];
   let currentScanData = null;
 
+  // ==========================================================================
+  // In-App Toast Notification Utility (Token-driven)
+  // ==========================================================================
+  function showToast(title, message, type = 'info', duration = 3800) {
+    if (!toastContainer) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+
+    let iconSymbol = '#icon-brand-buzl';
+    if (type === 'success') iconSymbol = '#icon-check';
+    else if (type === 'error') iconSymbol = '#icon-x';
+
+    toast.innerHTML = `
+      <svg class="icon-sm toast-icon"><use href="${iconSymbol}"/></svg>
+      <div class="toast-body">
+        <div class="toast-title">${title}</div>
+        ${message ? `<div class="toast-message">${message}</div>` : ''}
+      </div>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('toast-fadeout');
+      setTimeout(() => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 250);
+    }, duration);
+  }
+
+  // ==========================================================================
+  // Custom Confirmation Modal (WCAG 2.2 AA compliant)
+  // ==========================================================================
+  function showConfirmDialog({ title, message, confirmText = 'Confirm', onConfirm }) {
+    if (!customConfirmModal) {
+      if (confirm(`${title}\n\n${message}`)) {
+        if (onConfirm) onConfirm();
+      }
+      return;
+    }
+
+    if (confirmModalTitle) confirmModalTitle.textContent = title;
+    if (confirmModalMessage) confirmModalMessage.textContent = message;
+    if (confirmModalConfirmBtn) confirmModalConfirmBtn.textContent = confirmText;
+
+    pendingConfirmCallback = onConfirm;
+    customConfirmModal.classList.remove('hidden');
+    if (confirmModalConfirmBtn) confirmModalConfirmBtn.focus();
+  }
+
+  function hideConfirmDialog() {
+    if (customConfirmModal) customConfirmModal.classList.add('hidden');
+    pendingConfirmCallback = null;
+  }
+
+  if (confirmModalConfirmBtn) {
+    confirmModalConfirmBtn.addEventListener('click', () => {
+      const cb = pendingConfirmCallback;
+      hideConfirmDialog();
+      if (cb) cb();
+    });
+  }
+
+  if (confirmModalCancelBtn) confirmModalCancelBtn.addEventListener('click', hideConfirmDialog);
+  if (closeConfirmModal) closeConfirmModal.addEventListener('click', hideConfirmDialog);
+
+  // Keyboard accessibility: Escape to dismiss dialogs
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (customConfirmModal && !customConfirmModal.classList.contains('hidden')) hideConfirmDialog();
+      if (backupsModal && !backupsModal.classList.contains('hidden')) backupsModal.classList.add('hidden');
+      if (uninstallModal && !uninstallModal.classList.contains('hidden')) uninstallModal.classList.add('hidden');
+      if (scriptModal && !scriptModal.classList.contains('hidden')) scriptModal.classList.add('hidden');
+    }
+  });
+
+  // ==========================================================================
+  // Console Tabbed Navigation (WAI-ARIA Compliant with Arrow Key Navigation)
+  // ==========================================================================
+  const tabButtons = Array.from(document.querySelectorAll('.console-tab-btn'));
+  const tabContents = document.querySelectorAll('.console-tab-content');
+
+  function switchTab(tabId) {
+    tabButtons.forEach(btn => {
+      const isActive = btn.dataset.tab === tabId;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      btn.setAttribute('tabindex', isActive ? '0' : '-1');
+    });
+
+    tabContents.forEach(content => {
+      content.classList.toggle('active', content.id === tabId);
+    });
+  }
+
+  // Initialize roving tabindex on tabs
+  tabButtons.forEach(btn => {
+    const isActive = btn.classList.contains('active');
+    btn.setAttribute('tabindex', isActive ? '0' : '-1');
+  });
+
+  tabButtons.forEach((btn, index) => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+      if (target) switchTab(target);
+    });
+
+    btn.addEventListener('keydown', (e) => {
+      let targetIndex = -1;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        targetIndex = (index + 1) % tabButtons.length;
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        targetIndex = (index - 1 + tabButtons.length) % tabButtons.length;
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        targetIndex = 0;
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        targetIndex = tabButtons.length - 1;
+      }
+
+      if (targetIndex !== -1) {
+        const targetBtn = tabButtons[targetIndex];
+        targetBtn.focus();
+        switchTab(targetBtn.dataset.tab);
+      }
+    });
+  });
+
+  // ==========================================================================
+  // Verification Report KPIs & CAPI Inspector Rendering
+  // ==========================================================================
+  function renderVerificationKpis(report) {
+    if (!report) return;
+    currentVerificationReport = report;
+
+    if (kpiTotalChecks) kpiTotalChecks.textContent = report.total || 0;
+    if (kpiPassedChecks) kpiPassedChecks.textContent = report.passedCount || 0;
+    if (kpiFailedChecks) kpiFailedChecks.textContent = report.failedCount || 0;
+
+    if (btnExportJson) btnExportJson.disabled = false;
+    if (btnExportPdf) btnExportPdf.disabled = false;
+  }
+
+  function renderCapiInspector(capi) {
+    if (!capi) return;
+    currentCapiData = capi;
+
+    // 1. Update Badges
+    if (capiInspectStatusBadge) {
+      if (capi.ok) {
+        capiInspectStatusBadge.className = 'badge badge-success';
+        capiInspectStatusBadge.textContent = capi.status ? `HTTP ${capi.status} OK` : 'Verified Active';
+      } else if (capi.tested && capi.status === 0) {
+        capiInspectStatusBadge.className = 'badge badge-neutral';
+        capiInspectStatusBadge.textContent = 'Offline / Standby';
+      } else if (capi.tested && !capi.ok) {
+        capiInspectStatusBadge.className = 'badge badge-danger';
+        capiInspectStatusBadge.textContent = capi.status ? `HTTP ${capi.status}` : 'Error';
+      } else if (capi.configured) {
+        capiInspectStatusBadge.className = 'badge badge-info';
+        capiInspectStatusBadge.textContent = 'Configured';
+      } else {
+        capiInspectStatusBadge.className = 'badge badge-neutral';
+        capiInspectStatusBadge.textContent = 'Disabled';
+      }
+    }
+
+    if (kpiCapiStatus) {
+      if (capi.ok) {
+        kpiCapiStatus.className = 'badge badge-success';
+        kpiCapiStatus.textContent = 'Connected';
+      } else if (capi.configured) {
+        kpiCapiStatus.className = 'badge badge-info';
+        kpiCapiStatus.textContent = 'Configured';
+      } else {
+        kpiCapiStatus.className = 'badge badge-neutral';
+        kpiCapiStatus.textContent = 'Inactive';
+      }
+    }
+
+    if (capiInspectLatencyBadge) {
+      if (capi.latencyMs > 0) {
+        capiInspectLatencyBadge.classList.remove('hidden');
+        capiInspectLatencyBadge.className = 'badge badge-neutral';
+        capiInspectLatencyBadge.textContent = `⚡ ${capi.latencyMs}ms`;
+      } else {
+        capiInspectLatencyBadge.classList.add('hidden');
+      }
+    }
+
+    // 2. Render CAPI Payload
+    if (capiPayloadDisplay) {
+      if (capi.payload) {
+        capiPayloadDisplay.textContent = JSON.stringify(capi.payload, null, 2);
+      } else {
+        capiPayloadDisplay.textContent = '// No CAPI payload generated yet. Enable Buzl CAPI and run verification.';
+      }
+    }
+
+    // 3. Render CAPI Response
+    if (capiResponseDisplay) {
+      if (capi.response) {
+        capiResponseDisplay.textContent = typeof capi.response === 'object'
+          ? JSON.stringify(capi.response, null, 2)
+          : String(capi.response);
+      } else if (capi.message) {
+        capiResponseDisplay.textContent = JSON.stringify({ message: capi.message, status: capi.status || 0 }, null, 2);
+      } else {
+        capiResponseDisplay.textContent = '// No CAPI server response recorded yet.';
+      }
+    }
+
+    // 4. Render Registered Console Logs
+    if (capiLogsDisplay) {
+      if (capi.formattedAuditLog) {
+        capiLogsDisplay.innerHTML = '';
+        const lines = capi.formattedAuditLog.split('\n');
+        lines.forEach(line => {
+          const row = document.createElement('div');
+          row.className = 'log-row';
+          if (line.startsWith('===') || line.startsWith('---')) {
+            row.classList.add('log-audit-border');
+            row.textContent = line;
+          } else if (line.includes('BUZL CAPI LIVE DISPATCH')) {
+            row.classList.add('log-audit-title');
+            row.textContent = line;
+          } else if (line.includes('[Executing')) {
+            row.classList.add('log-audit-status');
+            row.textContent = line;
+          } else if (line.includes('CAPI VERIFICATION RESULT')) {
+            row.classList.add('log-audit-banner');
+            row.textContent = line;
+          } else if (line.startsWith('- ')) {
+            const colonIdx = line.indexOf(':');
+            if (colonIdx > -1) {
+              const keyPart = line.slice(0, colonIdx + 1);
+              const valPart = line.slice(colonIdx + 1).trim();
+
+              const keySpan = document.createElement('span');
+              keySpan.className = 'log-audit-key';
+              keySpan.textContent = keyPart + ' ';
+
+              const valSpan = document.createElement('span');
+              if (valPart.includes('201 Created') || valPart.includes('200 OK')) {
+                valSpan.className = 'log-audit-201';
+              } else if (valPart.startsWith('http')) {
+                valSpan.className = 'log-audit-url';
+              } else if (valPart.startsWith('{') || valPart.startsWith('[')) {
+                valSpan.className = 'log-audit-json';
+              } else {
+                valSpan.className = 'log-audit-val';
+              }
+              valSpan.textContent = valPart;
+
+              row.appendChild(keySpan);
+              row.appendChild(valSpan);
+            } else {
+              row.textContent = line;
+            }
+          } else if (line.trim() === '') {
+            row.innerHTML = '&nbsp;';
+          } else {
+            row.classList.add('log-info');
+            row.textContent = line;
+          }
+          capiLogsDisplay.appendChild(row);
+        });
+      } else {
+        const logs = capi.logs || [];
+        if (logs.length > 0) {
+          capiLogsDisplay.innerHTML = '';
+          logs.forEach(logLine => {
+            const row = document.createElement('div');
+            row.className = 'log-row';
+            if (logLine.includes('[CAPI-INIT]')) row.classList.add('log-info');
+            else if (logLine.includes('[CAPI-RESPONSE]') || logLine.includes('[CAPI-ACK]')) row.classList.add('log-success');
+            else if (logLine.includes('[CAPI-WARN]')) row.classList.add('log-warn');
+            else if (logLine.includes('[CAPI-ERROR]')) row.classList.add('log-error');
+            else row.classList.add('log-info');
+
+            row.textContent = logLine;
+            capiLogsDisplay.appendChild(row);
+          });
+        } else {
+          capiLogsDisplay.innerHTML = '<div class="log-row log-info">[STANDBY] Waiting for verification or test dispatch events...</div>';
+        }
+      }
+    }
+  }
+
+  // ==========================================================================
+  // Inspector Sub-tab Navigation
+  // ==========================================================================
+  const inspectorTabButtons = document.querySelectorAll('.inspector-tab-btn');
+  const inspectorViews = {
+    payload: document.getElementById('inspectViewPayload'),
+    response: document.getElementById('inspectViewResponse'),
+    logs: document.getElementById('inspectViewLogs')
+  };
+
+  inspectorTabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.inspect;
+      inspectorTabButtons.forEach(b => {
+        const isActive = b.dataset.inspect === target;
+        b.classList.toggle('active', isActive);
+        b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+
+      Object.keys(inspectorViews).forEach(key => {
+        if (inspectorViews[key]) {
+          inspectorViews[key].classList.toggle('hidden', key !== target);
+        }
+      });
+    });
+  });
+
+  // Copy Buttons for Inspector
+  if (btnCopyCapiPayload && capiPayloadDisplay) {
+    btnCopyCapiPayload.addEventListener('click', () => {
+      navigator.clipboard.writeText(capiPayloadDisplay.textContent).then(() => {
+        btnCopyCapiPayload.innerHTML = '<svg class="icon-xs" style="color:var(--color-success-accessible);"><use href="#icon-check"/></svg> <span>Copied!</span>';
+        showToast('Copied', 'CAPI JSON Payload copied to clipboard', 'success');
+        setTimeout(() => {
+          btnCopyCapiPayload.innerHTML = '<svg class="icon-xs"><use href="#icon-clipboard"/></svg> <span>Copy Payload</span>';
+        }, 2000);
+      });
+    });
+  }
+
+  if (btnCopyCapiResponse && capiResponseDisplay) {
+    btnCopyCapiResponse.addEventListener('click', () => {
+      navigator.clipboard.writeText(capiResponseDisplay.textContent).then(() => {
+        btnCopyCapiResponse.innerHTML = '<svg class="icon-xs" style="color:var(--color-success-accessible);"><use href="#icon-check"/></svg> <span>Copied!</span>';
+        showToast('Copied', 'CAPI Response copied to clipboard', 'success');
+        setTimeout(() => {
+          btnCopyCapiResponse.innerHTML = '<svg class="icon-xs"><use href="#icon-clipboard"/></svg> <span>Copy Response</span>';
+        }, 2000);
+      });
+    });
+  }
+
+  if (btnCopyCapiLogs && capiLogsDisplay) {
+    btnCopyCapiLogs.addEventListener('click', () => {
+      navigator.clipboard.writeText(capiLogsDisplay.textContent).then(() => {
+        btnCopyCapiLogs.innerHTML = '<svg class="icon-xs" style="color:var(--color-success-accessible);"><use href="#icon-check"/></svg> <span>Copied!</span>';
+        showToast('Copied', 'Console Logs copied to clipboard', 'success');
+        setTimeout(() => {
+          btnCopyCapiLogs.innerHTML = '<svg class="icon-xs"><use href="#icon-clipboard"/></svg> <span>Copy Logs</span>';
+        }, 2000);
+      });
+    });
+  }
+
+  // ==========================================================================
+  // Automated Verification Report Export: JSON & Printable PDF
+  // ==========================================================================
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function exportReportJson() {
+    if (!currentVerificationReport) {
+      showToast('Export Error', 'Please run automated verification first to generate a report.', 'error');
+      return;
+    }
+
+    const exportData = {
+      reportTitle: 'BUZL CAPI Suite — Automated Verification & Compliance Audit Report',
+      version: '0.1.2',
+      generatedAt: new Date().toISOString(),
+      projectRoot: (liveStateRootDir ? liveStateRootDir.textContent : '') || 'Workspace Root',
+      summary: {
+        totalChecks: currentVerificationReport.total || 0,
+        passedChecks: currentVerificationReport.passedCount || 0,
+        failedChecks: currentVerificationReport.failedCount || 0,
+        allPassed: !!currentVerificationReport.allPassed,
+        passRate: currentVerificationReport.total ? Math.round((currentVerificationReport.passedCount / currentVerificationReport.total) * 100) + '%' : '0%'
+      },
+      activeConfiguration: getCurrentConfig(),
+      tests: currentVerificationReport.tests || [],
+      capiTelemetry: currentVerificationReport.capi || currentCapiData || { configured: false }
+    };
+
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    a.href = url;
+    a.download = `buzl-verification-report-${timestamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showToast('Report Exported', 'Saved as structured JSON document', 'success');
+  }
+
+  function exportReportPdf() {
+    if (!currentVerificationReport) {
+      showToast('Export Error', 'Please run automated verification first to generate a report.', 'error');
+      return;
+    }
+
+    const report = currentVerificationReport;
+    const capi = report.capi || currentCapiData || {};
+    const timestamp = new Date().toLocaleString();
+    const projectPath = (liveStateRootDir ? liveStateRootDir.textContent : '') || 'Workspace Root';
+    const passRate = report.total ? Math.round((report.passedCount / report.total) * 100) : 0;
+    const statusColor = report.allPassed ? '#087f5b' : '#b02316';
+
+    let testRowsHtml = '';
+    (report.tests || []).forEach((t, i) => {
+      const iconText = t.passed ? '✔ PASS' : '✖ FAIL';
+      const badgeStyle = t.passed
+        ? 'background:#e6fcf5; color:#087f5b; border:1px solid #b2f2bb;'
+        : 'background:#fff5f5; color:#b02316; border:1px solid #ffc9c9;';
+      testRowsHtml += `
+        <tr style="border-bottom:1px solid #e5eaef;">
+          <td style="padding:6px 10px; font-family:monospace; color:#5a6a85;">#${i + 1}</td>
+          <td style="padding:6px 10px; font-weight:600; color:#2a3547;">${escapeHtml(t.name)}</td>
+          <td style="padding:6px 10px; text-align:center;"><span style="padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; ${badgeStyle}">${iconText}</span></td>
+          <td style="padding:6px 10px; font-size:11px; color:#5a6a85;">${escapeHtml(t.detail || '—')}</td>
+        </tr>
+      `;
+    });
+
+    const capiPayloadStr = capi.payload ? JSON.stringify(capi.payload, null, 2) : 'No CAPI payload generated';
+    const capiResponseStr = capi.response ? JSON.stringify(capi.response, null, 2) : (capi.message || 'No response recorded');
+    const capiLogsStr = capi.formattedAuditLog || (capi.logs || []).join('\n') || 'No console logs registered';
+
+    const printableHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Buzl Verification Audit Report - ${timestamp}</title>
+  <style>
+    @page { size: A4 portrait; margin: 12mm 15mm; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #2a3547; line-height: 1.4; padding: 15px; font-size: 11px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #004aad; padding-bottom: 12px; margin-bottom: 16px; }
+    .logo-badge { font-family: monospace; font-size: 16px; font-weight: 700; color: #004aad; }
+    .title { font-size: 18px; font-weight: 700; color: #2a3547; margin: 3px 0 2px; }
+    .meta { font-size: 11px; color: #5a6a85; }
+    .scorecard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .kpi-box { border: 1px solid #b8c4d5; border-radius: 6px; padding: 8px 12px; text-align: center; background: #f8fafc; }
+    .kpi-title { font-size: 10px; text-transform: uppercase; color: #5a6a85; font-weight: 700; margin-bottom: 2px; }
+    .kpi-num { font-size: 18px; font-weight: 700; font-family: monospace; }
+    .section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 8px; color: #004aad; border-bottom: 1px solid #e5eaef; padding-bottom: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 11px; }
+    th { background: #f2f6fa; color: #2a3547; text-align: left; padding: 6px 10px; font-weight: 700; border-bottom: 1px solid #b8c4d5; font-size: 10px; text-transform: uppercase; }
+    pre { background: #f8fafc; border: 1px solid #b8c4d5; border-radius: 4px; padding: 8px 10px; font-size: 10px; font-family: monospace; max-height: 220px; overflow: hidden; white-space: pre-wrap; word-break: break-all; }
+    .logs-box { background: #1a2332; color: #e2e8f0; font-family: monospace; font-size: 10px; padding: 8px 10px; border-radius: 4px; line-height: 1.5; white-space: pre-wrap; }
+    .footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e5eaef; display: flex; justify-content: space-between; font-size: 10px; color: #5a6a85; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="logo-badge">BUZL / CAPI SUITE</div>
+      <div class="title">Automated Verification &amp; Compliance Audit Report</div>
+      <div class="meta">Target Project: <code>${projectPath}</code></div>
+    </div>
+    <div style="text-align:right;">
+      <div class="meta"><strong>Date:</strong> ${timestamp}</div>
+      <div class="meta"><strong>Status:</strong> <span style="color:${statusColor}; font-weight:700;">${report.allPassed ? 'VERIFIED PASS' : 'ISSUES DETECTED'}</span></div>
+      <div class="meta"><strong>Engine:</strong> v0.1.2 (WCAG 2.2 AA)</div>
+    </div>
+  </div>
+
+  <div class="scorecard">
+    <div class="kpi-box">
+      <div class="kpi-title">Total Checks</div>
+      <div class="kpi-num">${report.total}</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-title">Passed</div>
+      <div class="kpi-num" style="color:#087f5b;">${report.passedCount}</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-title">Failed</div>
+      <div class="kpi-num" style="color:${report.failedCount > 0 ? '#b02316' : '#5a6a85'};">${report.failedCount}</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-title">Compliance Score</div>
+      <div class="kpi-num" style="color:${statusColor};">${passRate}%</div>
+    </div>
+  </div>
+
+  <div class="section-title">1. Automated Verification Checks (${report.passedCount}/${report.total} Passed)</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:30px;">#</th>
+        <th>Verification Item</th>
+        <th style="width:90px; text-align:center;">Result</th>
+        <th>Diagnostic Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${testRowsHtml}
+    </tbody>
+  </table>
+
+  <div class="section-title">2. Buzl CAPI Live Telemetry &amp; Payload Inspector</div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+    <div>
+      <div style="font-weight:700; margin-bottom:4px; font-size:10px; text-transform:uppercase; color:#5a6a85;">Dispatched CAPI Payload (JSON):</div>
+      <pre>${escapeHtml(capiPayloadStr)}</pre>
+    </div>
+    <div>
+      <div style="font-weight:700; margin-bottom:4px; font-size:10px; text-transform:uppercase; color:#5a6a85;">Server Acknowledgment / Response:</div>
+      <pre>${escapeHtml(capiResponseStr)}</pre>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:12px;">3. Registered Console Logs &amp; Audit Trail</div>
+  <div class="logs-box">${escapeHtml(capiLogsStr)}</div>
+
+  <div class="footer">
+    <div>Generated by Buzl CAPI Suite • Official Locations Compliance Engine</div>
+    <div>Certified Automated Verification Audit • Confidential</div>
+  </div>
+</body>
+</html>
+    `;
+
+    const printFrame = document.createElement('iframe');
+    printFrame.style.position = 'fixed';
+    printFrame.style.right = '0';
+    printFrame.style.bottom = '0';
+    printFrame.style.width = '0';
+    printFrame.style.height = '0';
+    printFrame.style.border = 'none';
+    document.body.appendChild(printFrame);
+
+    const doc = printFrame.contentWindow.document;
+    doc.open();
+    doc.write(printableHtml);
+    doc.close();
+
+    setTimeout(() => {
+      printFrame.contentWindow.focus();
+      printFrame.contentWindow.print();
+      setTimeout(() => {
+        if (printFrame.parentNode) printFrame.parentNode.removeChild(printFrame);
+      }, 1500);
+    }, 400);
+
+    showToast('Exporting PDF', 'Print dialog opened. Select "Save as PDF"', 'info');
+  }
+
+  if (btnExportJson) btnExportJson.addEventListener('click', exportReportJson);
+  if (btnExportPdf) btnExportPdf.addEventListener('click', exportReportPdf);
+
+  // ==========================================================================
+  // Column Hierarchy Preview
+  // ==========================================================================
   function renderColumnHierarchy() {
     if (!columnHierarchyPreview) return;
     columnHierarchyPreview.innerHTML = '';
@@ -87,7 +689,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 1. Fetch project scan & live state
+  // ==========================================================================
+  // 1. Fetch Project Scan & Live State
+  // ==========================================================================
   async function loadScan() {
     fileBadge.textContent = 'Scanning...';
     fileBadge.className = 'badge badge-neutral';
@@ -134,7 +738,7 @@ document.addEventListener('DOMContentLoaded', () => {
             label.className = 'field-checkbox-item';
             label.innerHTML = `
               <input type="checkbox" checked data-field="${formatted}">
-              <span><strong>${formatted}</strong> (${f.tag}) — <small class="helper-text">Placed next to Phone (Col D)</small></span>
+              <span><strong>${formatted}</strong> (${f.tag}) — <small class="helper-text">Col D</small></span>
             `;
 
             label.querySelector('input').addEventListener('change', (e) => {
@@ -189,6 +793,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       fileBadge.textContent = 'Scan Error';
       fileBadge.className = 'badge badge-danger';
+      showToast('Scan Error', 'Could not scan local project files', 'error');
     }
   }
 
@@ -237,7 +842,11 @@ document.addEventListener('DOMContentLoaded', () => {
       items.forEach(item => {
         const chip = document.createElement('span');
         chip.className = `chip ${item.active ? 'chip-active' : 'chip-inactive'}`;
-        chip.innerHTML = `<span class="status-dot ${item.active ? 'dot-active' : 'dot-inactive'}"></span> <span>${item.text}</span> ${item.active ? `<button type="button" class="chip-remove-btn" data-service="${item.serviceKey}" title="Remove ${item.label}"><svg class="icon-xs"><use href="#icon-x"/></svg></button>` : ''}`;
+        chip.innerHTML = `
+          <span class="status-dot ${item.active ? 'dot-active' : 'dot-inactive'}"></span>
+          <span>${item.text}</span>
+          ${item.active ? `<button type="button" class="chip-remove-btn" data-service="${item.serviceKey}" title="Remove ${item.label}"><svg class="icon-xs"><use href="#icon-x"/></svg></button>` : ''}
+        `;
 
         const removeBtn = chip.querySelector('.chip-remove-btn');
         if (removeBtn) {
@@ -252,7 +861,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function removeSingleService(serviceKey) {
+  // ==========================================================================
+  // Surgical Removal of Single Service
+  // ==========================================================================
+  function removeSingleService(serviceKey) {
     const serviceNames = {
       gtm: 'Google Tag Manager (GTM)',
       meta: 'Meta Pixel & Client CAPI',
@@ -262,26 +874,30 @@ document.addEventListener('DOMContentLoaded', () => {
       whatsapp: 'WhatsApp Handoff'
     };
     const name = serviceNames[serviceKey] || serviceKey;
-    if (!confirm(`Are you sure you want to remove ${name} from this site?\n\nAll other active tracking and configurations will be safely preserved. An automatic safety snapshot will be created before removal.`)) {
-      return;
-    }
 
-    try {
-      const res = await fetch('/api/remove-service', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ service: serviceKey })
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(data.message);
-        loadScan();
-      } else {
-        alert(`Failed to remove ${name}: ${data.message}`);
+    showConfirmDialog({
+      title: `Remove ${name}`,
+      message: `Are you sure you want to surgically remove ${name} from this site?\n\nAll other active tracking and configurations will be safely preserved. An automatic safety snapshot will be created before removal.`,
+      confirmText: 'Remove Service',
+      onConfirm: async () => {
+        try {
+          const res = await fetch('/api/remove-service', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ service: serviceKey })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast('Service Removed', data.message, 'success');
+            loadScan();
+          } else {
+            showToast('Removal Failed', data.message, 'error');
+          }
+        } catch (err) {
+          showToast('Network Error', err.message, 'error');
+        }
       }
-    } catch (err) {
-      alert(`Network error removing ${name}: ${err.message}`);
-    }
+    });
   }
 
   function applyLiveConfigToForm(data) {
@@ -324,6 +940,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (capiSwitch) {
       capiSwitch.checked = !!(live && live.buzlCapi && live.buzlCapi.active);
       capiSwitch.dispatchEvent(new Event('change'));
+    }
+
+    if (capiData && capiData.endpoint && !currentCapiData) {
+      renderCapiInspector({
+        configured: true,
+        tested: false,
+        endpoint: capiData.endpoint,
+        authUser: capiData.authUser,
+        logs: [
+          `[${new Date().toISOString().slice(11, 19)}] [CAPI-INFO] Loaded active CAPI configuration for endpoint: ${capiData.endpoint}`,
+          `[${new Date().toISOString().slice(11, 19)}] [CAPI-INFO] Ready for automated verification or synthetic test lead.`
+        ]
+      });
     }
 
     // Google Sheets
@@ -370,6 +999,7 @@ document.addEventListener('DOMContentLoaded', () => {
           waSwitch.checked = true;
           waSwitch.dispatchEvent(new Event('change'));
         }
+        showToast('WhatsApp Applied', `Applied auto-detected number: ${detectedWa}`, 'success');
       };
       if (waHelper) {
         waHelper.textContent = `Auto-fetches ${detectedWa} from form buttons, or specify fallback number.`;
@@ -393,7 +1023,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // ==========================================================================
   // 2. Render Individual Discovered Forms with Per-Form Testing
+  // ==========================================================================
   function renderIndividualForms(forms, archetypes) {
     if (!individualFormsList) return;
     individualFormsList.innerHTML = '';
@@ -402,9 +1034,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (formsCountBadge) {
       if (archetypes && archetypes.length > 0 && forms.length !== archetypes.length) {
-        formsCountBadge.textContent = `${forms.length} Instances (${archetypes.length} Unique)`;
+        formsCountBadge.textContent = `${forms.length} (${archetypes.length} unique)`;
       } else {
-        formsCountBadge.textContent = `${forms.length} Form(s)`;
+        formsCountBadge.textContent = `${forms.length}`;
       }
     }
 
@@ -417,7 +1049,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = document.createElement('div');
       card.className = 'form-item-card';
 
-      const tagPills = f.inputs.map(i => `<span class="col-pill col-pill-dynamic" style="font-size: 10px;">${i.name}</span>`).join('');
+      const tagPills = f.inputs.map(i => `<span class="col-pill col-pill-dynamic" style="font-size: 11px;">${i.name}</span>`).join('');
 
       // Build sample test input controls
       const inputElements = f.inputs.map(i => {
@@ -446,7 +1078,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const isShared = f.isShared || (f.pages && f.pages.length > 1);
       const pageInfo = isShared
         ? `<span class="badge badge-info" style="font-size: 10.5px;"><svg class="icon-xs"><use href="#icon-refresh"/></svg> <span>Appears on ${f.pages.length} pages</span></span>`
-        : `<small style="color: var(--text-dim); font-size: 11px;">in <code>${f.file || (f.pages && f.pages[0]) || 'page'}</code></small>`;
+        : `<small style="color: var(--color-text-inverse); font-size: 11px;">in <code>${f.file || (f.pages && f.pages[0]) || 'page'}</code></small>`;
 
       const pagesList = (isShared && f.pages)
         ? `<div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
@@ -473,7 +1105,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="form-actions-row">
           <button type="button" class="btn btn-primary btn-sm btn-test-this-form" data-form-id="${f.formId}">
             <svg class="icon-xs"><use href="#icon-send"/></svg>
-            <span>Test This Form (${f.selector})</span>
+            <span>Test Form (${f.selector})</span>
           </button>
           <span class="form-test-result hidden"></span>
         </div>
@@ -488,7 +1120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         testBtn.innerHTML = '<svg class="icon-xs icon-spin"><use href="#icon-refresh"/></svg> <span>Testing...</span>';
         resultSpan.classList.remove('hidden');
         resultSpan.className = 'form-test-result badge badge-info';
-        resultSpan.innerHTML = '<svg class="icon-xs icon-spin"><use href="#icon-refresh"/></svg> <span>Dispatching to Sheet &amp; CAPI...</span>';
+        resultSpan.innerHTML = '<svg class="icon-xs icon-spin"><use href="#icon-refresh"/></svg> <span>Dispatching...</span>';
 
         // Collect fields
         const fieldValues = {};
@@ -511,30 +1143,40 @@ document.addEventListener('DOMContentLoaded', () => {
           });
           const data = await res.json();
           testBtn.disabled = false;
-          testBtn.innerHTML = `<svg class="icon-xs"><use href="#icon-send"/></svg> <span>Test This Form (${f.selector})</span>`;
+          testBtn.innerHTML = `<svg class="icon-xs"><use href="#icon-send"/></svg> <span>Test Form (${f.selector})</span>`;
 
           if (data.success && data.results) {
             const ch = data.results.channels;
+            if (ch && ch.buzlCapi) {
+              renderCapiInspector(ch.buzlCapi);
+              if (currentVerificationReport) {
+                currentVerificationReport.capi = ch.buzlCapi;
+              }
+            }
             const sheetOk = ch.googleSheets && ch.googleSheets.ok;
             const capiOk = ch.buzlCapi && ch.buzlCapi.ok;
 
             if (sheetOk || capiOk) {
               resultSpan.className = 'form-test-result badge badge-success';
               const rowLabel = (ch.googleSheets.message.match(/Row \d+/) || [])[0] || 'OK';
-              resultSpan.innerHTML = `<svg class="icon-xs" style="vertical-align:text-bottom; margin-right:3px;"><use href="#icon-check"/></svg> <span>Delivered! (Sheets: ${sheetOk ? rowLabel : 'Off'} | CAPI: ${capiOk ? 'Accepted' : 'Off'})</span>`;
+              resultSpan.innerHTML = `<svg class="icon-xs"><use href="#icon-check"/></svg> <span>Delivered! (Sheets: ${sheetOk ? rowLabel : 'Off'} | CAPI: ${capiOk ? 'Accepted' : 'Off'})</span>`;
+              showToast('Form Test Success', `Payload successfully delivered for ${f.selector}`, 'success');
             } else {
               resultSpan.className = 'form-test-result badge badge-danger';
-              resultSpan.innerHTML = `<svg class="icon-xs" style="vertical-align:text-bottom; margin-right:3px;"><use href="#icon-x"/></svg> <span>Failed: ${ch.googleSheets.message || ch.buzlCapi.message || 'Error'}</span>`;
+              resultSpan.innerHTML = `<svg class="icon-xs"><use href="#icon-x"/></svg> <span>Failed: ${ch.googleSheets.message || ch.buzlCapi.message || 'Error'}</span>`;
+              showToast('Form Test Warning', 'No active channels received payload', 'error');
             }
           } else {
             resultSpan.className = 'form-test-result badge badge-danger';
-            resultSpan.innerHTML = `<svg class="icon-xs" style="vertical-align:text-bottom; margin-right:3px;"><use href="#icon-x"/></svg> <span>Error: ${data.message || 'Failed'}</span>`;
+            resultSpan.innerHTML = `<svg class="icon-xs"><use href="#icon-x"/></svg> <span>Error: ${data.message || 'Failed'}</span>`;
+            showToast('Form Test Error', data.message || 'Execution failed', 'error');
           }
         } catch (e) {
           testBtn.disabled = false;
-          testBtn.innerHTML = `<svg class="icon-xs"><use href="#icon-send"/></svg> <span>Test This Form (${f.selector})</span>`;
+          testBtn.innerHTML = `<svg class="icon-xs"><use href="#icon-send"/></svg> <span>Test Form (${f.selector})</span>`;
           resultSpan.className = 'form-test-result badge badge-danger';
-          resultSpan.innerHTML = `<svg class="icon-xs" style="vertical-align:text-bottom; margin-right:3px;"><use href="#icon-x"/></svg> <span>Network Error: ${e.message}</span>`;
+          resultSpan.innerHTML = `<svg class="icon-xs"><use href="#icon-x"/></svg> <span>Network Error: ${e.message}</span>`;
+          showToast('Network Error', e.message, 'error');
         }
       });
 
@@ -542,7 +1184,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ==========================================================================
   // 3. Named Backups Management
+  // ==========================================================================
   async function loadBackupsList() {
     if (!backupsTableBody) return;
     backupsTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Loading backups...</td></tr>';
@@ -555,7 +1199,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (backupsCountBadge) backupsCountBadge.textContent = backups.length;
 
       if (backups.length === 0) {
-        backupsTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No backups found on disk.</td></tr>';
+        backupsTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--color-text-inverse); padding: 18px 0;">No snapshots found on disk.</td></tr>';
         return;
       }
 
@@ -566,64 +1210,78 @@ document.addEventListener('DOMContentLoaded', () => {
 
         tr.innerHTML = `
           <td><strong>${b.name || 'Snapshot'}</strong></td>
-          <td><code style="font-size: 11px; color: var(--text-muted);">${b.dirName}</code></td>
+          <td><code style="font-size: 11px; color: var(--color-brand-primary);">${b.dirName}</code></td>
           <td>${formattedDate}</td>
           <td><span class="badge badge-neutral">${b.filesCount} file(s)</span></td>
           <td style="display: flex; gap: 6px;">
-            <button type="button" class="btn btn-secondary btn-sm btn-restore-backup" data-dir="${b.dirName}" data-name="${b.name}">
+            <button type="button" class="btn btn-secondary btn-xs btn-restore-backup" data-dir="${b.dirName}" data-name="${b.name}">
               <svg class="icon-xs"><use href="#icon-refresh"/></svg>
               <span>Restore</span>
             </button>
-            <button type="button" class="btn btn-danger-outline btn-sm btn-delete-backup" data-dir="${b.dirName}">
+            <button type="button" class="btn btn-danger-outline btn-xs btn-delete-backup" data-dir="${b.dirName}">
               <svg class="icon-xs"><use href="#icon-trash"/></svg>
               <span>Delete</span>
             </button>
           </td>
         `;
 
-        // Restore action
-        tr.querySelector('.btn-restore-backup').addEventListener('click', async (e) => {
+        // Restore action with in-app confirm
+        tr.querySelector('.btn-restore-backup').addEventListener('click', (e) => {
           const dir = e.currentTarget.dataset.dir;
           const name = e.currentTarget.dataset.name;
-          if (!confirm(`Are you sure you want to restore "${name}" (${dir})? All current HTML files will be replaced with this snapshot.`)) return;
 
-          try {
-            const rRes = await fetch('/api/restore', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ backupDirName: dir })
-            });
-            const rData = await rRes.json();
-            alert(rData.message);
-            backupsModal.classList.add('hidden');
-            loadScan();
-          } catch (err) {
-            alert('Restore failed: ' + err.message);
-          }
+          showConfirmDialog({
+            title: `Restore Snapshot`,
+            message: `Are you sure you want to restore "${name}" (${dir})?\n\nAll current HTML files will be replaced with this snapshot.`,
+            confirmText: 'Restore Files',
+            onConfirm: async () => {
+              try {
+                const rRes = await fetch('/api/restore', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ backupDirName: dir })
+                });
+                const rData = await rRes.json();
+                showToast('Snapshot Restored', rData.message, 'success');
+                backupsModal.classList.add('hidden');
+                loadScan();
+              } catch (err) {
+                showToast('Restore Error', err.message, 'error');
+              }
+            }
+          });
         });
 
-        // Delete action
-        tr.querySelector('.btn-delete-backup').addEventListener('click', async (e) => {
+        // Delete action with in-app confirm
+        tr.querySelector('.btn-delete-backup').addEventListener('click', (e) => {
           const dir = e.currentTarget.dataset.dir;
-          if (!confirm(`Are you sure you want to delete backup "${dir}"? This cannot be undone.`)) return;
 
-          try {
-            const dRes = await fetch('/api/delete-backup', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ backupDirName: dir })
-            });
-            const dData = await dRes.json();
-            loadBackupsList();
-          } catch (err) {
-            alert('Delete failed: ' + err.message);
-          }
+          showConfirmDialog({
+            title: `Delete Snapshot`,
+            message: `Are you sure you want to permanently delete backup "${dir}"? This action cannot be undone.`,
+            confirmText: 'Delete Snapshot',
+            onConfirm: async () => {
+              try {
+                const dRes = await fetch('/api/delete-backup', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ backupDirName: dir })
+                });
+                const dData = await dRes.json();
+                showToast('Snapshot Deleted', dData.message || 'Backup deleted', 'info');
+                loadBackupsList();
+              } catch (err) {
+                showToast('Delete Failed', err.message, 'error');
+              }
+            }
+          });
         });
 
         backupsTableBody.appendChild(tr);
       });
     } catch (e) {
-      backupsTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Failed to load backups: ${e.message}</td></tr>`;
+      backupsTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--color-danger-dark);">Failed to load backups: ${e.message}</td></tr>`;
+      showToast('Backups Error', e.message, 'error');
     }
   }
 
@@ -656,16 +1314,19 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCreateNamedBackup.disabled = false;
         btnCreateNamedBackup.innerHTML = '<svg class="icon-sm"><use href="#icon-database"/></svg> <span>Save Snapshot</span>';
         if (customBackupName) customBackupName.value = '';
+        showToast('Snapshot Created', `Saved point-in-time snapshot on disk`, 'success');
         loadBackupsList();
       } catch (err) {
         btnCreateNamedBackup.disabled = false;
         btnCreateNamedBackup.innerHTML = '<svg class="icon-sm"><use href="#icon-database"/></svg> <span>Save Snapshot</span>';
-        alert('Backup failed: ' + err.message);
+        showToast('Backup Failed', err.message, 'error');
       }
     });
   }
 
+  // ==========================================================================
   // 4. Clean Tracking Removal / Uninstaller
+  // ==========================================================================
   if (btnUninstallTracking) {
     btnUninstallTracking.addEventListener('click', () => {
       uninstallModal.classList.remove('hidden');
@@ -678,21 +1339,21 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnConfirmUninstall) {
     btnConfirmUninstall.addEventListener('click', async () => {
       btnConfirmUninstall.disabled = true;
-      btnConfirmUninstall.textContent = '⏳ Removing all tracking...';
+      btnConfirmUninstall.innerHTML = '<svg class="icon-xs icon-spin"><use href="#icon-refresh"/></svg> <span>Removing all tracking...</span>';
 
       try {
         const res = await fetch('/api/remove-tracking', { method: 'POST' });
         const data = await res.json();
         btnConfirmUninstall.disabled = false;
-        btnConfirmUninstall.textContent = 'Confirm & Remove All Tracking';
+        btnConfirmUninstall.innerHTML = '<svg class="icon-xs"><use href="#icon-trash"/></svg> <span>Confirm &amp; Remove All Tracking</span>';
         uninstallModal.classList.add('hidden');
 
-        alert(data.message);
+        showToast('Tracking Removed', data.message, 'success');
         loadScan();
       } catch (e) {
         btnConfirmUninstall.disabled = false;
-        btnConfirmUninstall.textContent = 'Confirm & Remove All Tracking';
-        alert('Removal failed: ' + e.message);
+        btnConfirmUninstall.innerHTML = '<svg class="icon-xs"><use href="#icon-trash"/></svg> <span>Confirm &amp; Remove All Tracking</span>';
+        showToast('Removal Failed', e.message, 'error');
       }
     });
   }
@@ -708,7 +1369,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // ==========================================================================
   // 5. Fetch Apps Script Template Code
+  // ==========================================================================
   async function loadScriptTemplate() {
     try {
       const res = await fetch('/api/apps-script');
@@ -734,10 +1397,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (copyScriptCode) {
     copyScriptCode.addEventListener('click', () => {
       navigator.clipboard.writeText(scriptTemplateText).then(() => {
-        copyScriptCode.innerHTML = '<svg class="icon-xs" style="color:var(--success)"><use href="#icon-check"/></svg> <span>Copied!</span>';
+        copyScriptCode.innerHTML = '<svg class="icon-xs" style="color:var(--color-success-dark)"><use href="#icon-check"/></svg> <span>Copied!</span>';
+        showToast('Copied to Clipboard', 'Google Apps Script code copied to clipboard', 'success');
         setTimeout(() => {
           copyScriptCode.innerHTML = '<svg class="icon-xs"><use href="#icon-clipboard"/></svg> <span>Copy Code</span>';
-        }, 2000);
+        }, 2200);
       });
     });
   }
@@ -748,7 +1412,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sec = document.getElementById(sectionId);
     if (!sw || !sec) return;
     sw.addEventListener('change', () => {
-      sec.style.opacity = sw.checked ? '1' : '0.4';
+      sec.style.opacity = sw.checked ? '1' : '0.45';
       sec.style.pointerEvents = sw.checked ? 'all' : 'none';
     });
   }
@@ -788,15 +1452,20 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  // 6. Inject & Run Tests Form Submit
+  // ==========================================================================
+  // 6. Inject & Run Automated Verification Form Submit
+  // ==========================================================================
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     btnSubmit.disabled = true;
     btnSubmit.innerHTML = '<svg class="icon-sm icon-spin"><use href="#icon-refresh"/></svg> <span>Injecting &amp; Running Tests...</span>';
     testSummaryBadge.textContent = 'Testing...';
-    testSummaryBadge.className = 'badge badge-info';
+    testSummaryBadge.className = 'tab-badge badge-info';
     testConsole.innerHTML = '<p class="empty-state">Executing injection and running automated verification tests...</p>';
+
+    // Automatically switch to verification tab so developer sees real-time test output
+    switchTab('tabVerification');
 
     const payload = getCurrentConfig();
 
@@ -814,7 +1483,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.success && result.testReport) {
         const report = result.testReport;
         testSummaryBadge.textContent = `${report.passedCount}/${report.total} Passed`;
-        testSummaryBadge.className = report.allPassed ? 'badge badge-success' : 'badge badge-danger';
+        testSummaryBadge.className = report.allPassed ? 'tab-badge badge-success' : 'tab-badge badge-danger';
+
+        renderVerificationKpis(report);
+        if (report.capi) {
+          renderCapiInspector(report.capi);
+        }
 
         testConsole.innerHTML = '';
         report.tests.forEach(t => {
@@ -833,22 +1507,32 @@ document.addEventListener('DOMContentLoaded', () => {
           testConsole.appendChild(item);
         });
 
+        showToast(
+          report.allPassed ? 'Configuration Applied' : 'Applied with Warnings',
+          `${report.passedCount}/${report.total} automated tests passed.`,
+          report.allPassed ? 'success' : 'error'
+        );
+
         loadScan();
       } else {
         testSummaryBadge.textContent = 'Failed';
-        testSummaryBadge.className = 'badge badge-danger';
+        testSummaryBadge.className = 'tab-badge badge-danger';
         testConsole.innerHTML = `<p class="test-icon fail">Error: ${result.message || 'Injection failed'}</p>`;
+        showToast('Injection Failed', result.message || 'Check server logs', 'error');
       }
     } catch (err) {
       btnSubmit.disabled = false;
       btnSubmit.innerHTML = '<svg class="icon-sm"><use href="#icon-brand-buzl"/></svg> <span>Apply Configuration &amp; Run Automated Tests</span>';
       testSummaryBadge.textContent = 'Network Error';
-      testSummaryBadge.className = 'badge badge-danger';
+      testSummaryBadge.className = 'tab-badge badge-danger';
       testConsole.innerHTML = `<p class="test-icon fail">Error communicating with local server: ${err.message}</p>`;
+      showToast('Network Error', err.message, 'error');
     }
   });
 
+  // ==========================================================================
   // 7. Quick Multi-Channel Test Lead Button
+  // ==========================================================================
   if (btnTestSubmit) {
     btnTestSubmit.addEventListener('click', async () => {
       const config = getCurrentConfig();
@@ -885,6 +1569,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.success && data.results) {
           const channels = data.results.channels;
+          if (channels && channels.buzlCapi) {
+            renderCapiInspector(channels.buzlCapi);
+            if (currentVerificationReport) {
+              currentVerificationReport.capi = channels.buzlCapi;
+            }
+          }
           testDispatchResults.innerHTML = '';
 
           let anyFailed = false;
@@ -894,9 +1584,9 @@ document.addEventListener('DOMContentLoaded', () => {
             row.className = 'dispatch-row';
 
             const labelMap = {
-              googleSheets: 'Google Sheets',
-              buzlCapi: 'Buzl CAPI',
-              zoho: 'Zoho CRM'
+              googleSheets: 'Google Sheets CRM',
+              buzlCapi: 'Buzl CAPI Server',
+              zoho: 'Zoho Web-to-Lead'
             };
             const serviceName = labelMap[key] || key;
 
@@ -923,18 +1613,31 @@ document.addEventListener('DOMContentLoaded', () => {
           liveTestBadge.textContent = anyFailed ? 'Issues Found' : 'All Channels OK';
           liveTestBadge.className = anyFailed ? 'badge badge-danger' : 'badge badge-success';
 
+          showToast(
+            anyFailed ? 'Test Lead Dispatched with Warnings' : 'Test Lead Dispatched',
+            anyFailed ? 'One or more active channels reported issues.' : 'All active channels responded successfully.',
+            anyFailed ? 'error' : 'success'
+          );
+
         } else {
           testDispatchResults.innerHTML = `<p class="dispatch-detail text-danger">${data.message || 'Failed to dispatch test lead'}</p>`;
+          showToast('Dispatch Failed', data.message || 'Check server connection', 'error');
         }
       } catch (err) {
         btnTestSubmit.disabled = false;
         btnTestSubmit.innerHTML = '<svg class="icon-sm"><use href="#icon-send"/></svg> <span>Dispatch Quick Live Test Lead</span>';
         testDispatchResults.innerHTML = `<p class="dispatch-detail text-danger">Error: ${err.message}</p>`;
+        showToast('Network Error', err.message, 'error');
       }
     });
   }
 
-  if (btnScan) btnScan.addEventListener('click', loadScan);
+  if (btnScan) {
+    btnScan.addEventListener('click', () => {
+      loadScan();
+      showToast('Scan Refreshed', 'Inspected workspace HTML files and active state', 'info', 2000);
+    });
+  }
 
   // Initialize
   loadScan();
