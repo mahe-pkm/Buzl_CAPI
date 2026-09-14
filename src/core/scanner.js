@@ -144,7 +144,7 @@ function detectSiteLocation(rootDir, htmlContent = '') {
     }
   }
 
-  return 'Bengaluru';
+  return '';
 }
 
 /**
@@ -429,6 +429,24 @@ function scanProject(rootDir) {
     return dir === '.' ? '/' : `/${dir}`;
   }))).sort();
 
+  const cleanDirName = path.basename(rootDir).toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  const detectedDomain = cleanDirName || 'landing-page';
+
+  let detectedService = '';
+  for (const form of allDiscoveredForms) {
+    const sInput = (form.inputs || []).find(i => {
+      const lower = (i.name || '').toLowerCase();
+      return lower.includes('service') || lower.includes('inquiry') || lower.includes('treatment') || lower.includes('course') || lower.includes('department');
+    });
+    if (sInput) {
+      detectedService = form.id || form.selector || 'Website Inquiry';
+      break;
+    }
+  }
+  if (!detectedService && allDiscoveredForms.length > 0) {
+    detectedService = allDiscoveredForms[0].id || 'General Inquiry';
+  }
+
   const liveState = {
     gtm: { active: !!gtmId, id: gtmId },
     meta: { active: !!metaPixelId, id: metaPixelId },
@@ -444,6 +462,9 @@ function scanProject(rootDir) {
       number: (waCfg && waCfg.number) || '',
       detectedNumber: detectedWhatsapp || ''
     },
+    detectedLocation: detectedLocation || '',
+    detectedDomain: detectedDomain,
+    detectedService: detectedService || 'General Inquiry',
     forms: allDiscoveredForms,
     formArchetypes: formArchetypes,
     directories: directories,
@@ -465,8 +486,10 @@ function scanProject(rootDir) {
     filesWithGtm,
     filesWithMeta,
     uniqueFields,
-    detectedLocation,
+    detectedLocation: detectedLocation || '',
     detectedWhatsapp,
+    detectedDomain,
+    detectedService: detectedService || 'General Inquiry',
     existingConfig,
     liveState,
     forms: allDiscoveredForms,

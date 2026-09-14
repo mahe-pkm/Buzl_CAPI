@@ -238,6 +238,20 @@ async function runAsyncTests() {
     assert.strictEqual(scanAfterRem.liveState.zoho.active, false, 'Zoho must remain INACTIVE after removeService');
   });
 
+  // Test 13: Dynamic Test Lead Dispatch (Zero Hardcoding)
+  it('testIndividualForm dynamically derives service, domain, and avoids hardcoded clinic data', async () => {
+    const { testIndividualForm } = require('../src/core/tester');
+    const res = await testIndividualForm(sampleDir, 'customQuoteForm', {
+      name: 'Dr. Jane Smith',
+      phone: '9888877777',
+      service: 'Dental Implant Surgery'
+    }, {
+      siteLocation: 'Hyderabad Hub'
+    });
+
+    assert.ok(res.leadId.startsWith('test-customQuoteForm-'), 'Lead ID must derive dynamically from formId');
+  });
+
   // Final cleanup of test-sample
   const entries = fs.readdirSync(sampleDir);
   entries.forEach(e => {

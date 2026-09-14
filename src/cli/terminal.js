@@ -244,14 +244,25 @@ async function runTerminalWizard(rootDir) {
         return;
       }
 
-      console.log(`\n  Testing Form: ${colors.cyan(selectedForm.selector)}`);
-      const testPhone = (await askQuestion(rl, '  Enter test phone [9585950059]: ')).trim() || '9585950059';
-      const testName = (await askQuestion(rl, '  Enter test name [Buzl Test Lead]: ')).trim() || 'Buzl Test Lead';
+      console.log(`\n  Testing Form: ${colors.cyan(selectedForm.selector || selectedForm.formId || 'Form')}`);
+      const defaultPhone = selectedForm.detectedWhatsapp || scan.detectedWhatsapp || '';
+      const phonePrompt = defaultPhone ? `  Enter test phone [${defaultPhone}]: ` : '  Enter test phone: ';
+      const testPhone = (await askQuestion(rl, phonePrompt)).trim() || defaultPhone;
+      const testName = (await askQuestion(rl, '  Enter test name [Test Lead]: ')).trim() || 'Test Lead';
 
       const formFields = { phone: testPhone, name: testName, formId: selectedForm.formId };
       selectedForm.inputs.forEach(inp => {
         if (!formFields[inp.name]) {
-          formFields[inp.name] = inp.name.includes('service') ? 'Sports Injury Rehabilitation' : 'Test Value';
+          const lower = (inp.name || '').toLowerCase();
+          if (lower.includes('service') || lower.includes('inquiry') || lower.includes('treatment') || lower.includes('subject')) {
+            formFields[inp.name] = selectedForm.formId || 'General Inquiry';
+          } else if (lower.includes('email') || lower.includes('mail')) {
+            formFields[inp.name] = 'test-lead@example.com';
+          } else if (lower.includes('city') || lower.includes('loc')) {
+            formFields[inp.name] = scan.detectedLocation || '';
+          } else {
+            formFields[inp.name] = 'Test Value';
+          }
         }
       });
 

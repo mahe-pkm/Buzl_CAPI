@@ -140,9 +140,11 @@ async function runVerification(rootDir, htmlFiles, config) {
 async function testDispatch(arg1, arg2 = {}, arg3 = {}) {
   let config = arg1;
   let sampleLead = arg2;
+  let rootDir = '';
 
   // Polymorphic support: if called as (rootDir, config, sampleLead)
   if (typeof arg1 === 'string' && typeof arg2 === 'object') {
+    rootDir = arg1;
     config = arg2;
     sampleLead = arg3;
   }
@@ -150,10 +152,10 @@ async function testDispatch(arg1, arg2 = {}, arg3 = {}) {
   if (!sampleLead) sampleLead = {};
 
   const leadId = sampleLead.leadId || ('test-lead-' + Date.now());
-  const name = sampleLead.name || 'Buzl Test Lead';
-  const phone = sampleLead.phone || '9585950059';
-  const location = sampleLead.location || config.siteLocation || 'Bengaluru';
-  const service = sampleLead.service || 'General Consultation';
+  const name = sampleLead.name || 'Test Lead';
+  const phone = sampleLead.phone || config.whatsappNumber || (config.whatsapp && config.whatsapp.number) || '';
+  const location = sampleLead.location || config.siteLocation || '';
+  const service = sampleLead.service || 'General Inquiry';
 
   const results = {
     leadId,
@@ -173,7 +175,7 @@ async function testDispatch(arg1, arg2 = {}, arg3 = {}) {
         siteLocation: config.siteLocation || location,
         phone: phone,
         service: service,
-        email: sampleLead.email || 'test@gobuzl.com',
+        email: sampleLead.email || config.notificationEmail || 'test-lead@example.com',
         source: service,
         utm: { source: 'live_test_button', medium: 'gui_test', campaign: 'buzl_verification' },
         eventSourceUrl: sampleLead.eventSourceUrl || 'http://localhost:3333/test',
@@ -229,9 +231,15 @@ async function testDispatch(arg1, arg2 = {}, arg3 = {}) {
 
   if (capiEndpoint && authUser) {
     try {
+      const resolvedDomain = sampleLead.domain ||
+                             config.domain ||
+                             (config.siteUrl ? new URL(config.siteUrl).hostname : '') ||
+                             (rootDir ? path.basename(rootDir).toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') : '') ||
+                             'landing-page';
+
       const capiPayload = {
         leadId: leadId,
-        domain: 'samya-sports-clinic',
+        domain: resolvedDomain,
         eventName: 'Lead',
         eventTime: Math.floor(Date.now() / 1000),
         actionSource: 'website',
@@ -319,10 +327,10 @@ async function testDispatch(arg1, arg2 = {}, arg3 = {}) {
 async function testIndividualForm(rootDir, formId, formFields = {}, config = {}, extraOpts = {}) {
   const leadId = 'test-' + (formId || 'form').replace(/[^a-zA-Z0-9_-]/g, '') + '-' + Date.now();
 
-  const name = formFields.name || formFields.fullName || 'Buzl Form Test Lead';
-  const phone = formFields.phone || formFields.mobile || '9585950059';
-  const location = formFields.location || formFields.city || config.siteLocation || 'Bengaluru';
-  const service = formFields.service || formFields.subject || formId || 'General Inquiry';
+  const name = formFields.name || formFields.fullName || 'Test Lead';
+  const phone = formFields.phone || formFields.mobile || config.whatsappNumber || (config.whatsapp && config.whatsapp.number) || '';
+  const location = formFields.location || formFields.city || config.siteLocation || '';
+  const service = formFields.service || formFields.subject || formFields.inquiry || formId || 'General Inquiry';
   const pagePath = extraOpts.pagePath || formFields.pagePath || '/';
 
   const sampleLead = {
@@ -338,7 +346,7 @@ async function testIndividualForm(rootDir, formId, formFields = {}, config = {},
     rawFields: Object.assign({}, formFields, { formId, pagePath, isTest: true })
   };
 
-  return await testDispatch(config, sampleLead);
+  return await testDispatch(rootDir, config, sampleLead);
 }
 
 module.exports = {

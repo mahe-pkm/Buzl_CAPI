@@ -3,6 +3,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
 const assert = require('assert');
 const { scanProject } = require('../src/core/scanner');
 const { applyInjection, removeService, removeTracking } = require('../src/core/injector');
@@ -29,6 +30,13 @@ async function it(desc, fn) {
 }
 
 async function runTests() {
+  const mockServer = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'success', row: 2 }));
+  });
+  await new Promise(resolve => mockServer.listen(0, resolve));
+  const mockPort = mockServer.address().port;
+
   // 1. Setup multi-page fixture directory tree
   if (fs.existsSync(fixtureDir)) {
     fs.rmSync(fixtureDir, { recursive: true, force: true });
@@ -120,7 +128,7 @@ async function runTests() {
   const testConfig = {
     gtmId: 'GTM-MULTI123',
     metaPixelId: '1122334455',
-    googleSheetUrl: 'http://localhost:5050',
+    googleSheetUrl: `http://localhost:${mockPort}`,
     siteLocation: 'Bengaluru Clinic',
     buzlCapi: {
       endpoint: 'https://capi.gobuzl.com/v1/event',
@@ -215,9 +223,10 @@ async function runTests() {
     assert.ok(spineContent.includes('1122334455'), 'Restored spine file should have Meta Pixel restored');
   });
 
-  // Cleanup fixture directory
+  // Cleanup fixture directory and mock server
   try {
     fs.rmSync(fixtureDir, { recursive: true, force: true });
+    mockServer.close();
   } catch (e) {}
 
   console.log(`\n================================`);

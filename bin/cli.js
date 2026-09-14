@@ -26,6 +26,7 @@
  */
 
 const path = require('path');
+const pkg = require('../package.json');
 const { runTerminalWizard } = require('../src/cli/terminal');
 const { startGuiServer } = require('../src/gui/server');
 const { restoreBackup, restoreLatestBackup, listBackups, manualBackup } = require('../src/core/rollback');
@@ -44,7 +45,7 @@ const rootDir = positionalArgs.length > 0 ? path.resolve(positionalArgs[0]) : pr
 // ============================================================================
 if (args.includes('--help') || args.includes('-h')) {
   console.log(`
-⚡ BUZL TRACKING & FORM DISPATCHER CLI (v1.0.0)
+⚡ BUZL TRACKING & FORM DISPATCHER CLI (v${pkg.version})
 
 USAGE:
   $ npx buzl-tracker [dir]                     Launch interactive terminal wizard

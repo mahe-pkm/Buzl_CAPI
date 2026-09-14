@@ -20,6 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const testLeadName = document.getElementById('testLeadName');
   const testLeadService = document.getElementById('testLeadService');
 
+  [testLeadPhone, testLeadName, testLeadService].forEach(el => {
+    if (el) el.addEventListener('input', () => { el.dataset.userEdited = 'true'; });
+  });
+
   // Individual Form elements
   const formsCountBadge = document.getElementById('formsCountBadge');
   const individualFormsList = document.getElementById('individualFormsList');
@@ -102,8 +106,16 @@ document.addEventListener('DOMContentLoaded', () => {
       updateLiveStateBar(data.liveState, data.rootDir);
 
       // Auto-detect site location
-      if (data.detectedLocation && siteLocationInput && !siteLocationInput.value) {
+      if (data.detectedLocation && siteLocationInput && !siteLocationInput.dataset.userEdited) {
         siteLocationInput.value = data.detectedLocation;
+      }
+
+      // Auto-detect phone and service for quick test dispatch
+      if (testLeadPhone && !testLeadPhone.dataset.userEdited) {
+        testLeadPhone.value = data.detectedWhatsapp || (data.liveState && data.liveState.whatsapp && data.liveState.whatsapp.detectedNumber) || '';
+      }
+      if (testLeadService && !testLeadService.dataset.userEdited) {
+        testLeadService.value = data.detectedService || 'General Inquiry';
       }
 
       // Populate dynamic fields checklist
@@ -409,12 +421,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Build sample test input controls
       const inputElements = f.inputs.map(i => {
-        let sampleVal = 'Test';
+        let sampleVal = 'Test Value';
         const lower = i.name.toLowerCase();
-        if (lower.includes('phone') || lower.includes('mobile')) sampleVal = '9585950059';
-        else if (lower.includes('name')) sampleVal = `Test Patient ${idx + 1}`;
-        else if (lower.includes('mail')) sampleVal = 'test@gobuzl.com';
-        else if (lower.includes('service')) sampleVal = 'Sports Injury Rehabilitation';
+        if (lower.includes('phone') || lower.includes('mobile')) {
+          sampleVal = f.detectedWhatsapp || (currentScanData && currentScanData.detectedWhatsapp) || '';
+        } else if (lower.includes('name')) {
+          sampleVal = `Test Lead ${idx + 1}`;
+        } else if (lower.includes('mail')) {
+          sampleVal = 'test-lead@example.com';
+        } else if (lower.includes('service') || lower.includes('inquiry') || lower.includes('treatment') || lower.includes('subject')) {
+          sampleVal = f.formTitle || f.id || (currentScanData && currentScanData.detectedService) || 'General Inquiry';
+        } else if (lower.includes('city') || lower.includes('loc')) {
+          sampleVal = (currentScanData && currentScanData.detectedLocation) || '';
+        }
 
         return `
           <div class="form-field-input-group">
@@ -833,9 +852,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnTestSubmit) {
     btnTestSubmit.addEventListener('click', async () => {
       const config = getCurrentConfig();
-      const phone = testLeadPhone.value.trim() || '9585950059';
-      const name = testLeadName.value.trim() || 'Buzl Test Lead';
-      const service = testLeadService.value.trim() || 'Sports Injury Rehabilitation';
+      const phone = testLeadPhone.value.trim() || (currentScanData && currentScanData.detectedWhatsapp) || '';
+      const name = testLeadName.value.trim() || 'Test Lead';
+      const service = testLeadService.value.trim() || (currentScanData && currentScanData.detectedService) || 'General Inquiry';
+      const loc = (siteLocationInput ? siteLocationInput.value.trim() : '') || (currentScanData && currentScanData.detectedLocation) || '';
 
       btnTestSubmit.disabled = true;
       btnTestSubmit.innerHTML = '<svg class="icon-sm icon-spin"><use href="#icon-refresh"/></svg> <span>Sending Live Test Lead...</span>';
@@ -854,7 +874,7 @@ document.addEventListener('DOMContentLoaded', () => {
               phone,
               name,
               service,
-              location: siteLocationInput ? siteLocationInput.value.trim() : 'Bengaluru'
+              location: loc
             }
           })
         });

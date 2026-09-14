@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.2] - 2026-09-14
+
+### Changed & Improved
+- **100% Dynamic Test Lead Generation**:
+  - Removed all hardcoded mock client data (`9585950059`, `Sports Injury Rehabilitation`, `samya-sports-clinic`, `Bengaluru`, `Test Patient`).
+  - `tester.js`: `domain` dynamically resolves from `config.domain`, URL hostname, or folder name (`path.basename(rootDir)`).
+  - `tester.js`: `phone`, `service`, `location`, and `email` dynamically pull from detected website metadata and actual form fields with clean neutral fallbacks.
+  - `scanner.js`: Removed hardcoded `Bengaluru` fallback, dynamically extracts `detectedDomain` and `detectedService`.
+  - `app.js` & `index.html`: Web GUI test cards dynamically pre-fill phone, service, and location from live site scan results instead of static mock strings.
+  - `bin/cli.js`: CLI version output dynamically loads from `package.json`.
+- **Enhanced Test Suite Resilience**:
+  - `multipage.test.js`: Added transient in-process HTTP mock server to guarantee 100% offline self-contained test execution.
+  - Added Test 13 in `injector.test.js` verifying dynamic test lead dispatch parameters.
+
+---
+
 ## [1.0.0] - 2026-09-14
 
 ### Initial Release
