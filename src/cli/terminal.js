@@ -11,6 +11,7 @@ const { applyInjection, removeTracking, removeService } = require('../core/injec
 const { runVerification, testIndividualForm } = require('../core/tester');
 const { listBackups, restoreBackup, manualBackup } = require('../core/rollback');
 const { startGuiServer } = require('../gui/server');
+const pkg = require('../../package.json');
 
 // Official Buzl Brand Color Tokens (with ANSI Truecolor & fallback)
 const colors = {
@@ -49,7 +50,7 @@ function printLiveState(scan) {
   console.log(colors.blueBold('  ██╔══██╗██║   ██║ ███╔╝  ██║  ╚══') + colors.amberBold('══╝██║     ██╔══██║██╔═══╝ ██║'));
   console.log(colors.blueBold('  ██████╔╝╚██████╔╝███████╗███████╗') + colors.amberBold('   ╚██████╗██║  ██║██║     ██║'));
   console.log(colors.blueBold('  ╚═════╝  ╚═════╝ ╚══════╝╚══════╝') + colors.amberBold('    ╚═════╝╚═╝  ╚═╝╚═╝     ╚═╝'));
-  console.log(colors.ice('       ⚡ BUZL CONVERSIONS API & MULTI-CHANNEL DISPATCHER • v1.0.0\n'));
+  console.log(colors.ice(`       ⚡ BUZL CONVERSIONS API & MULTI-CHANNEL DISPATCHER • v${pkg.version}\n`));
 
   // 2. Target Project Scope Card
   console.log(b('  ╭─────────────────────────── [ 📂 TARGET PROJECT ] ───────────────────────────╮'));

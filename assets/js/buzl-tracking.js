@@ -15,7 +15,7 @@
 }(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  var VERSION = '1.0.0';
+  var VERSION = '0.1.4';
 
   function win() { return typeof window !== 'undefined' ? window : {}; }
   function doc() { return typeof document !== 'undefined' ? document : {}; }

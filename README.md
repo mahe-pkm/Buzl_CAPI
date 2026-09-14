@@ -1,6 +1,6 @@
 # ⚡ Buzl Tracker & Conversions API (`@mahe_pkm/buzl-capi`)
 
-[![npm version](https://img.shields.io/badge/version-0.1.3-blue.svg)](https://github.com/mahe-pkm/Buzl_CAPI)
+[![npm version](https://img.shields.io/badge/version-0.1.4-blue.svg)](https://github.com/mahe-pkm/Buzl_CAPI)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen.svg)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests: Passing](https://img.shields.io/badge/tests-38%2F38%20passing-success.svg)](tests/)

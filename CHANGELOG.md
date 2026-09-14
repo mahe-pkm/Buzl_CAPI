@@ -5,6 +5,15 @@ All notable changes to the **Buzl Tracker & Conversions API (CAPI)** project wil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-09-14
+
+### Fixed
+- **Dynamic Version Resolution in Terminal Banner**:
+  - Replaced hardcoded static version string in `src/cli/terminal.js` banner with dynamic `pkg.version` resolution from `package.json`.
+  - Terminal interactive wizard now accurately reflects current package version across all platforms.
+- **Runtime Tracking Version Synchronization**:
+  - Synchronized `VERSION` constant in `src/templates/buzl-tracking.js` and `assets/js/buzl-tracking.js` to release `0.1.4`.
+
 ---
 
 ## [0.1.3] - 2026-09-14
