@@ -495,9 +495,64 @@
       </table>
     </section>
 
-    <!-- Chapter 2: Interactive Terminal Wizard -->
+    <!-- Chapter 2: NPM Package Installation & Updates -->
     <section class="chapter-card">
-      <h2>2. Interactive Terminal Setup Wizard</h2>
+      <h2>2. NPM Package Installation, Updates &amp; Publishing</h2>
+      <p>How to run, install, update, and publish <code>@mahe_pkm/buzl-capi</code> across Windows, macOS, and Linux:</p>
+
+      <h3>2.1 Always Run Latest via NPX (Bypasses NPX Cache)</h3>
+      <div class="command-block">
+        <div class="command-header">
+          <span class="os-tag powershell">🪟 Windows / 🍎 macOS / 🐧 Linux</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre class="command-code"><span class="comment"># Force npx to fetch and run latest version</span>
+<span class="cmd-name">npx</span> @mahe_pkm/buzl-capi@latest <span class="cmd-flag">--gui</span></pre>
+      </div>
+
+      <h3>2.2 Global CLI Installation &amp; Updating</h3>
+      <div class="command-block">
+        <div class="command-header">
+          <span class="os-tag powershell">🪟 Windows / 🍎 macOS / 🐧 Linux</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre class="command-code"><span class="comment"># Install or upgrade globally to latest</span>
+<span class="cmd-name">npm</span> install <span class="cmd-flag">-g</span> @mahe_pkm/buzl-capi@latest
+
+<span class="comment"># Alternative: update existing global package</span>
+<span class="cmd-name">npm</span> update <span class="cmd-flag">-g</span> @mahe_pkm/buzl-capi</pre>
+      </div>
+
+      <h3>2.3 Update as Local Project Dependency</h3>
+      <div class="command-block">
+        <div class="command-header">
+          <span class="os-tag powershell">🪟 Windows / 🍎 macOS / 🐧 Linux</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre class="command-code"><span class="comment"># Update package in project dependencies</span>
+<span class="cmd-name">npm</span> install @mahe_pkm/buzl-capi@latest</pre>
+      </div>
+
+      <h3>2.4 Author Publishing Workflow (with 2FA / OTP)</h3>
+      <div class="command-block">
+        <div class="command-header">
+          <span class="os-tag powershell">🪟 Windows / 🍎 macOS / 🐧 Linux</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre class="command-code"><span class="comment"># 1. Bump version (patch / minor / major)</span>
+<span class="cmd-name">npm</span> version patch
+
+<span class="comment"># 2. Push tags and commits to GitHub</span>
+<span class="cmd-name">git</span> push origin main <span class="cmd-flag">--tags</span>
+
+<span class="comment"># 3. Publish with 2FA authenticator OTP code & explicit latest tag</span>
+<span class="cmd-name">npm</span> publish <span class="cmd-flag">--tag</span> latest <span class="cmd-flag">--otp</span>=YOUR_6_DIGIT_OTP</pre>
+      </div>
+    </section>
+
+    <!-- Chapter 3: Interactive Terminal Wizard -->
+    <section class="chapter-card">
+      <h2>3. Interactive Terminal Setup Wizard</h2>
       <p>Guides you step-by-step through GTM, Meta Pixel/CAPI, Google Sheets Webhook, and WhatsApp configuration directly in the shell with real-time test verification.</p>
 
       <div class="command-block">
@@ -549,9 +604,9 @@
       </div>
     </section>
 
-    <!-- Chapter 3: Local Web GUI Dashboard -->
+    <!-- Chapter 4: Local Web GUI Dashboard -->
     <section class="chapter-card">
-      <h2>3. Local Web GUI Dashboard (Port 3333)</h2>
+      <h2>4. Local Web GUI Dashboard (Port 3333)</h2>
       <p>Launches an embedded visual management console on <code>http://localhost:3333</code> with live scanning, service switches, per-form test dispatches, and PDF/JSON export.</p>
 
       <div class="command-block">
@@ -603,9 +658,9 @@
       </div>
     </section>
 
-    <!-- Chapter 4: Snapshot Backup & Rollback -->
+    <!-- Chapter 5: Snapshot Backup & Rollback -->
     <section class="chapter-card">
-      <h2>4. Point-in-Time Snapshot Backup &amp; Rollback</h2>
+      <h2>5. Point-in-Time Snapshot Backup &amp; Rollback</h2>
       <p>Save immutable backups inside <code>.buzl/snapshots/</code> with cryptographic SHA-1 hashes and instant rollback capabilities.</p>
 
       <h3>Create Snapshot Backup</h3>
@@ -650,9 +705,9 @@
       </div>
     </section>
 
-    <!-- Chapter 5: Clean Tracking Uninstallation -->
+    <!-- Chapter 6: Clean Tracking Uninstallation -->
     <section class="chapter-card">
-      <h2>5. Clean Tracking Uninstallation</h2>
+      <h2>6. Clean Tracking Uninstallation</h2>
       <p>Cleanly strips GTM containers, Meta Pixel scripts, noscript fallbacks, <code>buzl-tracking.js</code> link tags, and form tracking attributes across all HTML files.</p>
 
       <div class="command-block">
@@ -672,9 +727,9 @@
       </div>
     </section>
 
-    <!-- Chapter 6: Background Daemons -->
+    <!-- Chapter 7: Background Daemons -->
     <section class="chapter-card">
-      <h2>6. Daemon &amp; Background Service Execution</h2>
+      <h2>7. Daemon &amp; Background Service Execution</h2>
       <p>Run the Web GUI daemon as a persistent background service:</p>
 
       <h3>🪟 Windows (PowerShell Background Job)</h3>
@@ -704,9 +759,9 @@ kill $(lsof -t -i:3333)</pre>
       </div>
     </section>
 
-    <!-- Chapter 7: Troubleshooting -->
+    <!-- Chapter 8: Troubleshooting -->
     <section class="chapter-card">
-      <h2>7. Troubleshooting &amp; Port Conflicts</h2>
+      <h2>8. Troubleshooting &amp; Port Conflicts</h2>
       <p>Resolve port 3333 conflicts across platforms:</p>
 
       <div class="command-block">

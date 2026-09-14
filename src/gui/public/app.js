@@ -1435,7 +1435,10 @@ document.addEventListener('DOMContentLoaded', () => {
       cmdBackup: 'npx @mahe_pkm/buzl-capi --backup "Pre-Launch Baseline"',
       cmdList: 'npx @mahe_pkm/buzl-capi --list-backups',
       cmdRestore: 'npx @mahe_pkm/buzl-capi --restore',
-      cmdUninstall: 'npx @mahe_pkm/buzl-capi --uninstall'
+      cmdUninstall: 'npx @mahe_pkm/buzl-capi --uninstall',
+      cmdNpxLatest: 'npx @mahe_pkm/buzl-capi@latest --gui',
+      cmdGlobalInstall: 'npm install -g @mahe_pkm/buzl-capi@latest',
+      cmdPublish2fa: 'npm publish --tag latest --otp=YOUR_6_DIGIT_OTP'
     },
     cmd: {
       cmdWizard: 'npx @mahe_pkm/buzl-capi',
@@ -1443,7 +1446,10 @@ document.addEventListener('DOMContentLoaded', () => {
       cmdBackup: 'npx @mahe_pkm/buzl-capi --backup "Pre-Launch Baseline"',
       cmdList: 'npx @mahe_pkm/buzl-capi --list-backups',
       cmdRestore: 'npx @mahe_pkm/buzl-capi --restore',
-      cmdUninstall: 'npx @mahe_pkm/buzl-capi --uninstall'
+      cmdUninstall: 'npx @mahe_pkm/buzl-capi --uninstall',
+      cmdNpxLatest: 'npx @mahe_pkm/buzl-capi@latest --gui',
+      cmdGlobalInstall: 'npm install -g @mahe_pkm/buzl-capi@latest',
+      cmdPublish2fa: 'npm publish --tag latest --otp=YOUR_6_DIGIT_OTP'
     },
     macos: {
       cmdWizard: 'npx @mahe_pkm/buzl-capi',
@@ -1451,7 +1457,10 @@ document.addEventListener('DOMContentLoaded', () => {
       cmdBackup: 'npx @mahe_pkm/buzl-capi --backup "Pre-Launch Baseline"',
       cmdList: 'npx @mahe_pkm/buzl-capi --list-backups',
       cmdRestore: 'npx @mahe_pkm/buzl-capi --restore',
-      cmdUninstall: 'npx @mahe_pkm/buzl-capi --uninstall'
+      cmdUninstall: 'npx @mahe_pkm/buzl-capi --uninstall',
+      cmdNpxLatest: 'npx @mahe_pkm/buzl-capi@latest --gui',
+      cmdGlobalInstall: 'npm install -g @mahe_pkm/buzl-capi@latest',
+      cmdPublish2fa: 'npm publish --tag latest --otp=YOUR_6_DIGIT_OTP'
     },
     linux: {
       cmdWizard: 'npx @mahe_pkm/buzl-capi',
@@ -1459,7 +1468,10 @@ document.addEventListener('DOMContentLoaded', () => {
       cmdBackup: 'npx @mahe_pkm/buzl-capi --backup "Pre-Launch Baseline"',
       cmdList: 'npx @mahe_pkm/buzl-capi --list-backups',
       cmdRestore: 'npx @mahe_pkm/buzl-capi --restore',
-      cmdUninstall: 'npx @mahe_pkm/buzl-capi --uninstall'
+      cmdUninstall: 'npx @mahe_pkm/buzl-capi --uninstall',
+      cmdNpxLatest: 'npx @mahe_pkm/buzl-capi@latest --gui',
+      cmdGlobalInstall: 'npm install -g @mahe_pkm/buzl-capi@latest',
+      cmdPublish2fa: 'npm publish --tag latest --otp=YOUR_6_DIGIT_OTP'
     }
   };
 

@@ -17,8 +17,13 @@ Every command in this handbook is provided in **isolated, blocked command snippe
    - [Windows Setup](#windows-setup)
    - [macOS Setup](#macos-setup)
    - [Linux Setup](#linux-setup)
-3. [CLI Reference Matrix & Syntax Standards](#3-cli-reference-matrix--syntax-standards)
-4. [OS-Specific Command Execution Handbook](#4-os-specific-command-execution-handbook)
+3. [NPM Package Installation, Updating & Version Management](#3-npm-package-installation-updating--version-management)
+   - [Zero-Install Execution via npx](#31-zero-install-execution-via-npx-recommended)
+   - [Global CLI Installation & Updating](#32-global-cli-installation--updating)
+   - [Updating as Local Project Dependency](#33-updating-as-a-local-project-dependency)
+   - [Author Publishing & Release Workflow (with 2FA / OTP)](#34-author-publishing--release-workflow-with-2fa--otp)
+4. [CLI Reference Matrix & Syntax Standards](#4-cli-reference-matrix--syntax-standards)
+5. [OS-Specific Command Execution Handbook](#5-os-specific-command-execution-handbook)
    - [Command 1: Interactive Terminal Setup Wizard](#command-1-interactive-terminal-setup-wizard)
    - [Command 2: Local Web GUI Server (Port 3333)](#command-2-local-web-gui-server-port-3333)
    - [Command 3: Create Point-in-Time Snapshot Backup](#command-3-create-point-in-time-snapshot-backup)
@@ -27,17 +32,17 @@ Every command in this handbook is provided in **isolated, blocked command snippe
    - [Command 6: Clean Tracking Uninstallation](#command-6-clean-tracking-uninstallation)
    - [Command 7: Open User Handbook in Browser](#command-7-open-user-handbook-in-browser)
    - [Command 8: Display CLI Help Manual](#command-8-display-cli-help-manual)
-5. [Daemon & Background Service Execution](#5-daemon--background-service-execution)
+6. [Daemon & Background Service Execution](#6-daemon--background-service-execution)
    - [Running as Background Daemon on Windows](#running-as-background-daemon-on-windows)
    - [Running as Background Daemon on macOS](#running-as-background-daemon-on-macos)
    - [Running as Background Daemon on Linux](#running-as-background-daemon-on-linux)
-6. [Web GUI Dashboard & Automated Verification Reports](#6-web-gui-dashboard--automated-verification-reports)
+7. [Web GUI Dashboard & Automated Verification Reports](#7-web-gui-dashboard--automated-verification-reports)
    - [Live State Inspection & Matrix](#live-state-inspection--matrix)
    - [Single-Form Independent Testing](#single-form-independent-testing)
    - [CAPI Telemetry Inspector & Structured Console Log](#capi-telemetry-inspector--structured-console-log)
    - [Exporting Automated Verification Reports (PDF & JSON)](#exporting-automated-verification-reports-pdf--json)
-7. [Google Sheets CRM Engine Deployment Guide](#7-google-sheets-crm-engine-deployment-guide)
-8. [Cross-Platform Troubleshooting & Diagnostics](#8-cross-platform-troubleshooting--diagnostics)
+8. [Google Sheets CRM Engine Deployment Guide](#8-google-sheets-crm-engine-deployment-guide)
+9. [Cross-Platform Troubleshooting & Diagnostics](#9-cross-platform-troubleshooting--diagnostics)
 
 ---
 
@@ -137,7 +142,136 @@ sudo pacman -S nodejs npm
 
 ---
 
-## 3. CLI Reference Matrix & Syntax Standards
+## 3. NPM Package Installation, Updating & Version Management
+
+This section covers how to install, update, and manage `@mahe_pkm/buzl-capi` across all operating systems, as well as the release publishing workflow for package maintainers.
+
+### 3.1. Zero-Install Execution via `npx` (Recommended)
+
+`npx` downloads and executes the package without adding global files. However, `npx` aggressively caches packages. If a new version was recently published, `npx` might run an older cached version unless you append `@latest`.
+
+#### 🪟 Windows (PowerShell & CMD)
+```powershell
+# Always run latest version (bypassing npx cache)
+npx @mahe_pkm/buzl-capi@latest
+
+# Launch GUI directly with latest version
+npx @mahe_pkm/buzl-capi@latest --gui
+
+# Target specific folder
+npx @mahe_pkm/buzl-capi@latest "C:\Projects\MyLandingPage" --gui
+```
+
+#### 🍎 macOS (Terminal / zsh) & 🐧 Linux (bash)
+```bash
+# Always run latest version (bypassing npx cache)
+npx @mahe_pkm/buzl-capi@latest
+
+# Launch GUI directly with latest version
+npx @mahe_pkm/buzl-capi@latest --gui
+
+# Target specific folder
+npx @mahe_pkm/buzl-capi@latest ~/Projects/MyLandingPage --gui
+```
+
+---
+
+### 3.2. Global CLI Installation & Updating
+
+Installing globally gives you direct access to the `buzl-tracker` and `buzl-capi` commands in any terminal.
+
+#### 🪟 Windows (PowerShell / CMD Run as Administrator if required)
+```powershell
+# Install globally
+npm install -g @mahe_pkm/buzl-capi@latest
+
+# Update existing global installation
+npm update -g @mahe_pkm/buzl-capi
+
+# Verify installed version
+buzl-tracker --help
+buzl-capi --help
+```
+
+#### 🍎 macOS (Terminal / zsh) & 🐧 Linux (bash)
+```bash
+# Install globally
+npm install -g @mahe_pkm/buzl-capi@latest
+
+# Update existing global installation
+npm update -g @mahe_pkm/buzl-capi
+
+# If permission error occurs (EACCES), configure npm prefix without sudo:
+mkdir -p ~/.npm-global
+npm config set prefix ~/.npm-global
+export PATH=$PATH:~/.npm-global/bin
+
+# Verify installed version
+buzl-tracker --help
+```
+
+---
+
+### 3.3. Updating as a Local Project Dependency
+
+If you installed the package inside your web project's `package.json`:
+
+```bash
+# Check if a newer version is available
+npm outdated @mahe_pkm/buzl-capi
+
+# Update to latest version and record in package.json
+npm install @mahe_pkm/buzl-capi@latest
+
+# Or update all dependencies within semantic range
+npm update @mahe_pkm/buzl-capi
+```
+
+---
+
+### 3.4. Author Publishing & Release Workflow (with 2FA / OTP)
+
+For maintainers publishing updates to the npm registry:
+
+#### Step 1: Bump Version
+```bash
+# Patch update (e.g. 0.1.3 -> 0.1.4)
+npm version patch
+
+# Minor update (e.g. 0.1.4 -> 0.2.0)
+npm version minor
+
+# Major update (e.g. 0.2.0 -> 1.0.0)
+npm version major
+```
+
+#### Step 2: Push Commits & Git Tags
+```bash
+git push origin main --tags
+```
+
+#### Step 3: Publish to NPM Registry
+If your npm account has Two-Factor Authentication (2FA) enabled, npm will return `npm error code EOTP`. Supply your 6-digit authenticator code via `--otp`:
+
+#### 🪟 Windows (PowerShell)
+```powershell
+# Publish with 2FA code and explicit latest tag
+npm publish --tag latest --otp=123456
+```
+
+#### 🍎 macOS / 🐧 Linux
+```bash
+# Publish with 2FA code and explicit latest tag
+npm publish --tag latest --otp=123456
+```
+
+> [!IMPORTANT]
+> **Why `--tag latest` is required:**
+> When publishing a package where earlier versions (e.g. `1.0.1`) were previously registered, npm will block `0.1.x` from implicitly claiming the `latest` pointer. Specifying `--tag latest` ensures that `npx @mahe_pkm/buzl-capi` and `npm install` immediately resolve to your new release.
+
+---
+
+## 4. CLI Reference Matrix & Syntax Standards
 
 | Command / Flag | Short Flag | Positional Argument | Description |
 | :--- | :--- | :--- | :--- |
@@ -155,7 +289,7 @@ sudo pacman -S nodejs npm
 
 ---
 
-## 4. OS-Specific Command Execution Handbook
+## 5. OS-Specific Command Execution Handbook
 
 ---
 
@@ -487,7 +621,7 @@ npx @mahe_pkm/buzl-capi --help
 
 ---
 
-## 5. Daemon & Background Service Execution
+## 6. Daemon & Background Service Execution
 
 When running `@mahe_pkm/buzl-capi --gui` as a persistent background daemon for local development teams or staging servers:
 
@@ -563,7 +697,7 @@ sudo systemctl start buzl-tracker
 
 ---
 
-## 6. Web GUI Dashboard & Automated Verification Reports
+## 7. Web GUI Dashboard & Automated Verification Reports
 
 The Web GUI (`http://localhost:3333`) provides complete visual management styled under the **Locations Design System**:
 
@@ -616,7 +750,7 @@ Timestamp: 2026-09-14T13:13:45.146Z
 
 ---
 
-## 7. Google Sheets CRM Engine Deployment Guide
+## 8. Google Sheets CRM Engine Deployment Guide
 
 `buzl-tracker` includes an enterprise-ready Google Apps Script CRM template (`Buzl_GoogleAppsScript_Template.gs`) with **zero monthly subscription fees**:
 
@@ -638,7 +772,7 @@ Timestamp: 2026-09-14T13:13:45.146Z
 
 ---
 
-## 8. Cross-Platform Troubleshooting & Diagnostics
+## 9. Cross-Platform Troubleshooting & Diagnostics
 
 ### Issue 1: Port 3333 is Already in Use
 

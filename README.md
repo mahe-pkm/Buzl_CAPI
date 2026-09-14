@@ -126,6 +126,63 @@ npx @mahe_pkm/buzl-capi --uninstall
 
 ---
 
+## 📦 NPM Package Installation, Updating & Version Management
+
+### 1. Always Run Latest via NPX (Bypasses Local Cache)
+Because `npx` caches previously downloaded packages locally, always specify `@latest` to ensure you execute the newest release:
+
+```bash
+# Always fetch and run the newest release
+npx @mahe_pkm/buzl-capi@latest
+
+# Launch Web GUI with latest release
+npx @mahe_pkm/buzl-capi@latest --gui
+```
+
+### 2. Global CLI Installation & Updating
+Install globally to execute `buzl-tracker` or `buzl-capi` anywhere without `npx`:
+
+```bash
+# Install globally (or upgrade existing global installation to latest)
+npm install -g @mahe_pkm/buzl-capi@latest
+
+# Alternative: update existing global package
+npm update -g @mahe_pkm/buzl-capi
+
+# Verify installed version
+buzl-tracker --help
+```
+
+### 3. Updating as a Local Project Dependency
+If installed inside a local project directory:
+
+```bash
+# Check if a newer version is available
+npm outdated @mahe_pkm/buzl-capi
+
+# Update to latest version in package.json
+npm install @mahe_pkm/buzl-capi@latest
+```
+
+### 4. Author Publishing & Release Workflow (with 2FA / OTP)
+For maintainers publishing updates to npm with Two-Factor Authentication (2FA) active:
+
+```bash
+# 1. Bump version
+npm version patch
+
+# 2. Push tags and commits to GitHub
+git push origin main --tags
+
+# 3. Publish to npm registry with 2FA authenticator OTP code & explicit latest tag
+npm publish --tag latest --otp=YOUR_6_DIGIT_OTP
+```
+
+> **Note on `--tag latest`:**
+> When publishing a patch/minor release where earlier versions (e.g. `1.0.1`) were previously registered on npm, npm blocks lower semver numbers from automatically updating the `latest` pointer. Specifying `--tag latest` is required so `npx @mahe_pkm/buzl-capi` and `npm install` immediately resolve to the new release.
+
+---
+
 ## ⚡ CLI Command Reference
 
 | Command / Flag | Alias | Description |
