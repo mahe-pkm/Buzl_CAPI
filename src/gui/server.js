@@ -10,6 +10,7 @@ const { scanProject } = require('../core/scanner');
 const { applyInjection, removeTracking, removeService } = require('../core/injector');
 const { runVerification, testDispatch, testIndividualForm } = require('../core/tester');
 const { restoreBackup, restoreLatestBackup, deleteBackup, listBackups, manualBackup } = require('../core/rollback');
+const pkg = require('../../package.json');
 
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
@@ -62,6 +63,17 @@ function startGuiServer(rootDir, port = 3333) {
     }
 
     try {
+      // 0. API: Version & Release Metadata
+      if (pathname === '/api/version' && req.method === 'GET') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          name: pkg.name,
+          version: pkg.version,
+          updatedAt: pkg.updatedAt || '22-Sep-2026 05:30 PM IST'
+        }));
+        return;
+      }
+
       // 1. API: Scan project
       if (pathname === '/api/scan' && req.method === 'GET') {
         const scan = scanProject(rootDir);

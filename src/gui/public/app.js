@@ -471,7 +471,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const exportData = {
       reportTitle: 'BUZL CAPI Suite — Automated Verification & Compliance Audit Report',
-      version: '0.1.4',
+      version: (currentScanData && currentScanData.version) ? currentScanData.version : '0.1.5',
+      lastUpdated: (currentScanData && currentScanData.updatedAt) ? currentScanData.updatedAt : '22-Sep-2026 05:30 PM IST',
       generatedAt: new Date().toISOString(),
       projectRoot: (liveStateRootDir ? liveStateRootDir.textContent : '') || 'Workspace Root',
       summary: {
@@ -569,7 +570,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div style="text-align:right;">
       <div class="meta"><strong>Date:</strong> ${timestamp}</div>
       <div class="meta"><strong>Status:</strong> <span style="color:${statusColor}; font-weight:700;">${report.allPassed ? 'VERIFIED PASS' : 'ISSUES DETECTED'}</span></div>
-      <div class="meta"><strong>Engine:</strong> v0.1.4 (WCAG 2.2 AA)</div>
+      <div class="meta"><strong>Engine:</strong> v${(currentScanData && currentScanData.version) || '0.1.5'} (${(currentScanData && currentScanData.updatedAt) ? `Updated: ${currentScanData.updatedAt}` : 'WCAG 2.2 AA'})</div>
     </div>
   </div>
 
@@ -708,6 +709,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Update Live State Bar
       updateLiveStateBar(data.liveState, data.rootDir);
+
+      // Dynamically update Version & Release Timestamp Badges
+      const versionBadge = document.getElementById('versionBadge');
+      const updateBadge = document.getElementById('updateBadge');
+      if (versionBadge && data.version) {
+        versionBadge.textContent = `v${data.version}`;
+      }
+      if (updateBadge && data.updatedAt) {
+        updateBadge.textContent = `Updated: ${data.updatedAt}`;
+      }
 
       // Auto-detect site location
       if (data.detectedLocation && siteLocationInput && !siteLocationInput.dataset.userEdited) {

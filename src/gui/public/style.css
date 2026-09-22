@@ -205,6 +205,19 @@ body {
   font-weight: var(--font-weight-base);
 }
 
+.update-badge {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-muted);
+  padding: 1px var(--space-6);
+  border-radius: var(--radius-xs);
+  font-weight: var(--font-weight-base);
+  display: inline-flex;
+  align-items: center;
+}
+
 .subtitle {
   color: var(--color-text-inverse);
   font-size: var(--font-size-sm);

@@ -86,13 +86,14 @@ it('Keeps ⚡ Buzl Lead CRM menu with newest-first sort action', () => {
   assert.ok(content.includes("addItem('🔄 Sort All Leads (Newest First)'"), 'Must have sort newest first menu item');
 });
 
-// Test 9: Forward operational columns (Handled By & Comments next to Lead Stage)
-it('Positions Handled By & Comments directly next to Lead Stage', () => {
+// Test 9: Standard 15-column layout sequence (Lead Stage, Event Time, Handled By, Comments)
+it('Positions Lead Stage, Event Time, Handled By, and Comments in correct sequence', () => {
   const stageIdx = content.indexOf("'Lead Stage'");
+  const eventTimeIdx = content.indexOf("'Event Time'");
   const handledIdx = content.indexOf("'Handled By'");
   const commentsIdx = content.indexOf("'Comments'");
-  assert.ok(stageIdx > -1 && handledIdx > stageIdx && commentsIdx > handledIdx, 'Handled By and Comments must follow Lead Stage');
-  assert.ok(content.indexOf("'Event Time'") > commentsIdx, 'Event Time must sit after Comments');
+  assert.ok(stageIdx > -1 && eventTimeIdx > stageIdx, 'Event Time must follow Lead Stage');
+  assert.ok(handledIdx > eventTimeIdx && commentsIdx > handledIdx, 'Handled By and Comments must follow Event Time');
 });
 
 // Test 10: Official Buzl Navy Blue Header (#1E4E9E / #FFFFFF)
@@ -113,9 +114,11 @@ it('Automatically deletes team tabs when rep has 0 leads', () => {
   assert.ok(content.includes('ss.deleteSheet(s)'), 'Must delete empty sheets when lead count is 0');
 });
 
-// Test 13: Team Member Dropdown & Configurable List
-it('Provides configurable team members and dynamic Handled By dropdown', () => {
+// Test 13: Team Member Dropdown & Configurable List (Zero Hardcoded Members)
+it('Provides configurable team members with zero hardcoded members and dynamic Handled By dropdown', () => {
   assert.ok(content.includes('DEFAULT_TEAM_MEMBERS'), 'Must define DEFAULT_TEAM_MEMBERS');
+  assert.ok(!content.includes("'Dr. Samya'"), 'Must not have hardcoded Dr. Samya');
+  assert.ok(!content.includes("'Dr. John'"), 'Must not have hardcoded Dr. John');
   assert.ok(content.includes('getTeamMembersList'), 'Must implement getTeamMembersList');
   assert.ok(content.includes('requireValueInList(teamList'), 'Must set dropdown validation on Handled By');
 });

@@ -282,6 +282,7 @@ npm publish --tag latest --otp=123456
 | `--restore [name]` | `-r`, `--rollback` | `[dir]` | Restores files to a named snapshot (or latest). |
 | `--uninstall` | `-u` | `[dir]` | Cleanly removes all injected tracking code from site. |
 | `--handbook` | — | — | Opens the printable User Handbook in default browser. |
+| `--version` | `-v` | — | Displays the current version and last update release timestamp. |
 | `--help` | `-h` | — | Displays the command-line usage manual. |
 
 > [!TIP]

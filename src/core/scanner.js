@@ -4,6 +4,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const pkg = require('../../package.json');
 
 const DEFAULT_IGNORED_DIRS = [
   'node_modules',
@@ -478,6 +479,8 @@ function scanProject(rootDir) {
 
   return {
     rootDir,
+    version: pkg.version,
+    updatedAt: pkg.updatedAt || '22-Sep-2026 05:30 PM IST',
     totalHtmlFiles: htmlFiles.length,
     files: cleanFiles,
     totalForms,

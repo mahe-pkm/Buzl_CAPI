@@ -41,11 +41,19 @@ const positionalArgs = args.filter(a => !a.startsWith('-'));
 const rootDir = positionalArgs.length > 0 ? path.resolve(positionalArgs[0]) : process.cwd();
 
 // ============================================================================
+// COMMAND: --version / -v (Display Current Version & Release Date)
+// ============================================================================
+if (args.includes('--version') || args.includes('-v')) {
+  console.log(`${pkg.name} v${pkg.version} (Updated: ${pkg.updatedAt || '22-Sep-2026 05:30 PM IST'})`);
+  process.exit(0);
+}
+
+// ============================================================================
 // COMMAND: --help / -h (Display Help Manual)
 // ============================================================================
 if (args.includes('--help') || args.includes('-h')) {
   console.log(`
-⚡ BUZL TRACKING & FORM DISPATCHER CLI (v${pkg.version})
+⚡ BUZL TRACKING & FORM DISPATCHER CLI (v${pkg.version} • Updated: ${pkg.updatedAt || '22-Sep-2026 05:30 PM IST'})
 
 USAGE:
   $ npx buzl-tracker [dir]                     Launch interactive terminal wizard
@@ -55,6 +63,7 @@ USAGE:
   $ npx buzl-tracker [dir] --restore [name]    Restore a specific backup or latest snapshot
   $ npx buzl-tracker [dir] --uninstall         Cleanly remove all tracking tags from site
   $ npx buzl-tracker --handbook                Open official User Handbook in default browser
+  $ npx buzl-tracker --version                 Display version and last update release timestamp
   $ npx buzl-tracker --help                    Show this help reference manual
 
 ARGUMENTS:
@@ -66,6 +75,7 @@ OPTIONS:
   -r, --restore [name]   Revert HTML files to a previous snapshot or 'latest'
   -u, --uninstall        Strip GTM, Meta Pixel, runtime scripts, and form hooks
       --handbook         Open printable cross-platform User Handbook in browser
+  -v, --version          Show current package version and release timestamp
   -h, --help             Display usage guide and command summary
 
 KEY CAPABILITIES:
@@ -167,7 +177,7 @@ if (args.includes('--uninstall') || args.includes('-u')) {
 // ============================================================================
 if (args.includes('--gui') || args.includes('-g')) {
   // Start local web GUI server on port 3333
-  console.log(`⚡ Launching Buzl Tracker Web GUI for: ${rootDir}`);
+  console.log(`⚡ Launching Buzl Tracker Web GUI v${pkg.version} (Updated: ${pkg.updatedAt || '22-Sep-2026 05:30 PM IST'}) for: ${rootDir}`);
   startGuiServer(rootDir);
 } else {
   // Start interactive terminal wizard with step-by-step CLI prompts

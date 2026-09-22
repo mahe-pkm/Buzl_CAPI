@@ -6,7 +6,7 @@
  * 
  * FEATURES:
  * 1. 'All Leads' (Master Sheet): Inbound leads insert at Row 2 (Top of sheet).
- * 2. Guaranteed Forward Layout: Handled By & Comments sit right next to Lead Stage.
+ * 2. Standard 15-Column CRM Layout: Name, Location, Phone, Lead Stage, Event Time, Is Qualified, Qualified Date, Is Spam, Handled By, Comments, Action Source, Source, UTM Source, UTM Campaign, Lead ID.
  * 3. Universal Fuzzy Matcher: Case-insensitive & whitespace-tolerant header mapping.
  * 4. Official Buzl Navy Header: #1E4E9E background with bold white text (#FFFFFF).
  * 5. Full-Row Highlighting: Entire rows (A:Z) color-coded by Lead Stage (LOWER formula).
@@ -21,17 +21,18 @@
 // Core column definitions
 var MASTER_SHEET_NAME = 'All Leads';
 var STATUS_TABS = ['New', 'Contacted', 'Qualified', 'Converted', 'Spam', 'Test'];
-var DEFAULT_TEAM_MEMBERS = ['Dr. Samya', 'Dr. John', 'Sales Rep', 'Front Desk'];
+// Configurable Team Members (Leave empty [] to discover reps dynamically from sheet entries)
+var DEFAULT_TEAM_MEMBERS = [];
 
-// Forward Operational Layout: Handled By and Comments sit right next to Lead Stage
+// Standard 15-Column CRM Layout
 var STANDARD_CRM_COLUMNS = [
   'Lead Stage',
-  'Handled By',
-  'Comments',
+  'Event Time',
   'Is Qualified',
   'Qualified Date',
   'Is Spam',
-  'Event Time',
+  'Handled By',
+  'Comments',
   'Action Source',
   'Source',
   'UTM Source',
@@ -316,10 +317,9 @@ function ensureCrmLayout(sheet, dynamicFields, forceReorganize) {
   if (lastRow === 0) {
     var initialHeaders = ['Name', 'Location', 'Phone'];
     if (dynamicFields) {
-      for (var df in dynamicFields) initialHeaders.push(df);
-    }
-    if (initialHeaders.indexOf('Service') === -1) {
-      initialHeaders.push('Service');
+      for (var df in dynamicFields) {
+        if (initialHeaders.indexOf(df) === -1) initialHeaders.push(df);
+      }
     }
     initialHeaders = initialHeaders.concat(STANDARD_CRM_COLUMNS);
 
@@ -341,9 +341,7 @@ function ensureCrmLayout(sheet, dynamicFields, forceReorganize) {
   var needsReorganization = forceReorganize === true ||
     leadStageIdx === -1 ||
     handledByIdx === -1 ||
-    commentsIdx === -1 ||
-    handledByIdx !== leadStageIdx + 1 ||
-    commentsIdx !== leadStageIdx + 2;
+    commentsIdx === -1;
 
   if (needsReorganization) {
     // 1. Build index mapping for all standard fields
@@ -352,7 +350,7 @@ function ensureCrmLayout(sheet, dynamicFields, forceReorganize) {
       idxMap[key] = findHeaderIndex(oldHeaders, COLUMN_ALIASES[key]);
     }
 
-    // 2. Build target headers: Name, Location, Phone, [Email if present], [Dynamic fields / Service], Standard CRM Columns
+    // 2. Build target headers: Name, Location, Phone, [Email if present], [Dynamic fields], [Service if present], Standard CRM Columns
     var targetHeaders = ['Name', 'Location', 'Phone'];
     if (idxMap.email > -1) {
       targetHeaders.push('Email');
@@ -362,7 +360,7 @@ function ensureCrmLayout(sheet, dynamicFields, forceReorganize) {
         if (targetHeaders.indexOf(k) === -1) targetHeaders.push(k);
       }
     }
-    if (targetHeaders.indexOf('Service') === -1) {
+    if (idxMap.service > -1 && targetHeaders.indexOf('Service') === -1) {
       targetHeaders.push('Service');
     }
     targetHeaders = targetHeaders.concat(STANDARD_CRM_COLUMNS);
@@ -838,13 +836,13 @@ function onOpen() {
 function menuInitCrm() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var master = getOrCreateMasterSheet(ss);
-  var headers = ensureCrmLayout(master, { Service: 'General Consultation' }, true);
+  var headers = ensureCrmLayout(master, null, false);
   initializeCrmTabs(ss, headers);
   applyDropdownValidations(master, headers, null, ss);
   applyColumnWidths(master, headers);
   applyColorCoding(master, headers);
   applyDateFormatting(master, headers);
-  SpreadsheetApp.getUi().alert('✔ Buzl CRM Upgraded! Columns reorganized forward, full-row colors active, and team tabs synced.');
+  SpreadsheetApp.getUi().alert('✔ Buzl CRM Upgraded! CRM headers verified, full-row colors active, and team tabs synced.');
 }
 
 function menuSortNewestFirst() {

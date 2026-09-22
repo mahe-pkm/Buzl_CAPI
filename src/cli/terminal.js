@@ -50,11 +50,12 @@ function printLiveState(scan) {
   console.log(colors.blueBold('  ██╔══██╗██║   ██║ ███╔╝  ██║  ╚══') + colors.amberBold('══╝██║     ██╔══██║██╔═══╝ ██║'));
   console.log(colors.blueBold('  ██████╔╝╚██████╔╝███████╗███████╗') + colors.amberBold('   ╚██████╗██║  ██║██║     ██║'));
   console.log(colors.blueBold('  ╚═════╝  ╚═════╝ ╚══════╝╚══════╝') + colors.amberBold('    ╚═════╝╚═╝  ╚═╝╚═╝     ╚═╝'));
-  console.log(colors.ice(`       ⚡ BUZL CONVERSIONS API & MULTI-CHANNEL DISPATCHER • v${pkg.version}\n`));
+  console.log(colors.ice(`       ⚡ BUZL CONVERSIONS API & MULTI-CHANNEL DISPATCHER • v${pkg.version} • Updated: ${pkg.updatedAt || '22-Sep-2026 05:30 PM IST'}\n`));
 
   // 2. Target Project Scope Card
   console.log(b('  ╭─────────────────────────── [ 📂 TARGET PROJECT ] ───────────────────────────╮'));
   console.log(b('  │') + '  Path     : ' + colors.bold(scan.rootDir));
+  console.log(b('  │') + '  Engine   : ' + colors.ice(`v${pkg.version}`) + colors.dim(` (Updated: ${pkg.updatedAt || '22-Sep-2026 05:30 PM IST'})`));
   console.log(b('  │') + '  Pages    : ' + colors.ice(`${scan.totalHtmlFiles} HTML file(s) discovered`));
   console.log(b('  │') + '  Location : ' + colors.amber(scan.detectedLocation || 'N/A'));
   console.log(b('  ╰─────────────────────────────────────────────────────────────────────────────╯'));

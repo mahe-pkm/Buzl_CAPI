@@ -5,6 +5,27 @@ All notable changes to the **Buzl Tracker & Conversions API (CAPI)** project wil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.5] - 2026-09-22
+
+### Added
+- **Package Release Date & Time Visibility Across Terminal & Web GUI**:
+  - Baked `"updatedAt": "22-Sep-2026 05:30 PM IST"` into `package.json` for deterministic timestamp discovery across NPM global installs and `npx` executions.
+  - Interactive terminal wizard ASCII banner now displays `v0.1.5 • Updated: 22-Sep-2026 05:30 PM IST`.
+  - Target Project Scope Card in terminal displays `Engine : v0.1.5 (Updated: 22-Sep-2026 05:30 PM IST)`.
+  - Added `-v` and `--version` CLI flags printing package name, version, and release timestamp.
+  - Web GUI top header bar features a dedicated `#updateBadge` alongside `#versionBadge` dynamically synchronized via `/api/scan` and `/api/version`.
+  - Audit report PDF and JSON export generators dynamically include engine version and release timestamp.
+
+### Refactored & Improved
+- **Zero-Hardcoded Handled By in Google Apps Script Engine**:
+  - Cleared legacy hardcoded doctor/rep placeholders (`Dr. Samya`, `Dr. John`, `Sales Rep`, `Front Desk`) from `Buzl_GoogleAppsScript_Template.gs` and `src/templates/GoogleAppsScript.gs`.
+  - Set `DEFAULT_TEAM_MEMBERS = []`; team member sub-tabs and dropdown validations are now derived 100% dynamically from actual entries in the sheet.
+- **15-Column Standard CRM Layout Synchronization**:
+  - Aligned Google Apps Script CRM headers with standard sequence (`Name`, `Location`, `Phone`, `Lead Stage`, `Event Time`, `Is Qualified`, `Qualified Date`, `Is Spam`, `Handled By`, `Comments`, `Action Source`, `Source`, `UTM Source`, `UTM Campaign`, `Lead ID`).
+  - Removed forced injection of unnecessary `Service` columns on pre-existing CRM sheets.
+
+---
+
 ## [0.1.4] - 2026-09-14
 
 ### Fixed

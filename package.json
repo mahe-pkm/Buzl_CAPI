@@ -1,6 +1,7 @@
 {
   "name": "@mahe_pkm/buzl-capi",
-  "version": "0.1.4",
+  "version": "0.1.5",
+  "updatedAt": "22-Sep-2026 05:30 PM IST",
   "description": "All-in-one CLI & GUI for automated GTM, Meta Pixel/CAPI, Google Sheets Form Sync, and Zoho CRM injection with self-testing.",
   "main": "src/index.js",
   "bin": {
@@ -21,7 +22,7 @@
   "scripts": {
     "start": "node bin/cli.js",
     "gui": "node bin/cli.js --gui",
-    "test": "node tests/injector.test.js && node tests/multipage.test.js && node tests/whatsapp-autofetch.test.js && node tests/gas-template.test.js"
+    "test": "node tests/injector.test.js && node tests/multipage.test.js && node tests/whatsapp-autofetch.test.js && node tests/gas-template.test.js && node tests/version-meta.test.js"
   },
   "files": [
     "bin",
